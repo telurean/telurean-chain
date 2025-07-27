@@ -1,6 +1,6 @@
 [package]
-name = "pallet-poa"
-description = "Proof of Authority."
+name = "pallet-hvc"
+description = "Human-Validated Consensus."
 version = "0.1.0"
 license = "Unlicense"
 authors.workspace = true

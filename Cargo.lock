@@ -5906,7 +5906,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-poa"
+name = "pallet-hvc"
 version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
@@ -9471,7 +9471,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
- "pallet-poa",
+ "pallet-hvc",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
