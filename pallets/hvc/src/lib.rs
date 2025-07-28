@@ -87,6 +87,9 @@ pub mod pallet {
 		
         #[pallet::constant]
         type MaxConsuls: Get<u32>;
+
+        #[pallet::constant]
+        type MaxPatricians: Get<u32>;
 	}
 
 	#[pallet::storage]
@@ -95,6 +98,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn consuls)]
 	pub type Consuls<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxConsuls>, ValueQuery>;
+
+    #[pallet::storage]
+    #[pallet::getter(fn patricians)]
+    pub type Patricians<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxPatricians>, ValueQuery>;
 
 	/// Events that functions in this pallet can emit.
 	///

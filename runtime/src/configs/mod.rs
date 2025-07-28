@@ -161,4 +161,5 @@ impl pallet_hvc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_hvc::weights::SubstrateWeight<Runtime>;
 	type MaxConsuls = ConstU32<20>;
+	type MaxPatricians = ConstU32<100>;
 }
