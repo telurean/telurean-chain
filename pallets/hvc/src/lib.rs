@@ -84,14 +84,17 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// A type representing the weights required by the dispatchables of this pallet.
 		type WeightInfo: WeightInfo;
+		
+        #[pallet::constant]
+        type MaxConsuls: Get<u32>;
 	}
 
-	/// A storage item for this pallet.
-	///
-	/// In this template, we are declaring a storage item called `Something` that stores a single
-	/// `u32` value. Learn more about runtime storage here: <https://docs.substrate.io/build/runtime-storage/>
 	#[pallet::storage]
 	pub type Something<T> = StorageValue<_, u32>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn consuls)]
+	pub type Consuls<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxConsuls>, ValueQuery>;
 
 	/// Events that functions in this pallet can emit.
 	///

@@ -157,8 +157,8 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
-/// Configure the pallet-hvc in pallets/hvc.
 impl pallet_hvc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_hvc::weights::SubstrateWeight<Runtime>;
+	type MaxConsuls = ConstU32<20>;
 }
