@@ -191,7 +191,29 @@ pub mod pallet {
         NoneValue,
         /// There was an attempt to increment the value in storage over `u32::MAX`.
         StorageOverflow,
-    }
+        /// The account attempting to approve/reject a proposal is not a consul assigned to this proposal.
+        NotAssignedConsul,
+        /// The account attempting to act as a consul is not a valid consul. This error takes precedence over NotAssignedConsul.
+        InvalidConsul,
+        /// The maximum number of consuls has been reached, and an attempt was made to add another.
+        TooManyConsuls,
+        /// The account attempting to propose a block is not a valid patrician.
+        InvalidPatrician,
+        /// The maximum number of patricians has been reached, and an attempt was made to add another.
+        TooManyPatricians,
+        /// At least one of the accounts proposed as a candidate is not valid (for example, it does not exist).
+        InvalidCandidate,
+        /// The block is either invalid or missing.
+        InvalidBlock,
+        /// The block is not in a valid state to be approved/rejected (for example, attempting to approve a block that has already been approved).
+        InvalidBlockState,
+        /// The proposal is either invalid or missing.
+        InvalidProposal,
+        /// The consul did not respond before the established deadline.
+        DeadlinePassed,
+        /// The required signature is invalid or missing.
+        InvalidSignature,
+}
 
     /// The pallet's dispatchable functions ([`Call`]s).
     ///
