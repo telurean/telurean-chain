@@ -86,20 +86,32 @@ pub mod pallet {
         /// A type representing the weights required by the dispatchables of this pallet.
         type WeightInfo: WeightInfo;
         
-        /// Maximum required limit for the BoundedVec type.
+        /// Maximum required limit for the BoundedVec type corresponding to Consuls.
         #[pallet::constant]
         type MaxConsuls: Get<u32>;
 
-        /// Maximum required limit for the BoundedVec type.
+        /// Maximum required limit for the BoundedVec type corresponding to Patricians.
         #[pallet::constant]
         type MaxPatricians: Get<u32>;
 
-        /// Maximum required limit for the BoundedVec type.
+        /// Maximum required limit for the BoundedVec type corresponding to Terms.
         #[pallet::constant]
         type MaxTerms: Get<u32>;
 
         /// Type for the terms of office of consuls and patricians.
         type Moment: Copy + PartialOrd + MaxEncodedLen + Encode + Decode + TypeInfo;
+
+        /// Maximum required limit for the BoundedVec type corresponding to PendingConsulNominations.
+        #[pallet::constant]
+        type MaxConsulNominations: Get<u32>;
+
+        /// Maximum required limit for the BoundedVec type corresponding to PendingPatriciansNominations.
+        #[pallet::constant]
+        type MaxPatricianNominations: Get<u32>;
+
+        /// Maximum required limit for the BoundedVec type corresponding to PendingBlockProposals.
+        #[pallet::constant]
+        type MaxBlockProposals: Get<u32>;
     }
 
     #[pallet::storage]
@@ -120,6 +132,22 @@ pub mod pallet {
     #[pallet::getter(fn terms)]
     pub type Terms<T: Config> = StorageValue<_, BoundedVec<(T::AccountId, T::Moment), T::MaxTerms>, ValueQuery>;
 
+    /// List of proposals to add new consuls to the system.
+    #[pallet::storage]
+    #[pallet::getter(fn pending_consul_nominations)]
+    pub type PendingConsulNominations<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxConsulNominations>, ValueQuery>;
+
+    /// List of proposals to add new patricians to the system. 
+    #[pallet::storage]
+    #[pallet::getter(fn pending_patrician_nominations)]
+    pub type PendingPatricianNominations<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxPatricianNominations>, ValueQuery>;
+
+    /// List of proposals to add new blocks to the chain. Each proposal includes the proposed block 
+    /// and the account of the patrician responsible for the new block. 
+    #[pallet::storage]
+    #[pallet::getter(fn pending_block_proposals)]
+    pub type PendingBlockProposals<T: Config> = StorageValue<_, BoundedVec<(BlockNumberFor<T>, T::AccountId), T::MaxBlockProposals>, ValueQuery>;
+    
     /// Events that functions in this pallet can emit.
     ///
     /// Events are a simple means of indicating to the outside world (such as dApps, chain explorers
