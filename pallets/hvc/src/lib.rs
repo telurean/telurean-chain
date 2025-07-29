@@ -73,6 +73,23 @@ pub mod pallet {
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
+        // Enumeración para las propuestas
+    #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
+    pub enum Proposal<T: Config> {
+        ConsulNomination(u32, T::AccountId, T::Moment),
+        PatricianNomination(u32, T::AccountId, T::Moment),
+        NewBlock(u32, BlockNumberFor<T>),
+    }
+
+    // Enumeración para las decisiones
+    #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+    pub enum Decision {
+        Approved,
+        Rejected,
+        NeedsInfo,
+    }
+
     /// The pallet's configuration trait.
     ///
     /// All our types and constants a pallet depends on must be declared here.
@@ -101,17 +118,13 @@ pub mod pallet {
         /// Type for the terms of office of consuls and patricians.
         type Moment: Copy + PartialOrd + MaxEncodedLen + Encode + Decode + TypeInfo;
 
-        /// Maximum required limit for the BoundedVec type corresponding to PendingConsulNominations.
+        /// Maximum limit required for the BoundedVec type corresponding to Proposals.
         #[pallet::constant]
-        type MaxConsulNominations: Get<u32>;
+        type MaxProposals: Get<u32>;
 
-        /// Maximum required limit for the BoundedVec type corresponding to PendingPatriciansNominations.
+        /// Maximum limit required for the BoundedVec type corresponding to Decisions.
         #[pallet::constant]
-        type MaxPatricianNominations: Get<u32>;
-
-        /// Maximum required limit for the BoundedVec type corresponding to PendingBlockProposals.
-        #[pallet::constant]
-        type MaxBlockProposals: Get<u32>;
+        type MaxDecisions: Get<u32>;
     }
 
     #[pallet::storage]
@@ -132,21 +145,15 @@ pub mod pallet {
     #[pallet::getter(fn terms)]
     pub type Terms<T: Config> = StorageValue<_, BoundedVec<(T::AccountId, T::Moment), T::MaxTerms>, ValueQuery>;
 
-    /// List of proposals to add new consuls to the system.
+    /// List of proposals to add new consuls, patricians, blocks... to the system.
     #[pallet::storage]
-    #[pallet::getter(fn pending_consul_nominations)]
-    pub type PendingConsulNominations<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxConsulNominations>, ValueQuery>;
+    #[pallet::getter(fn proposals)]
+    pub type Proposals<T: Config> = StorageValue<_, BoundedVec<(T::AccountId, Proposal<T>), T::MaxProposals>, ValueQuery>;
 
-    /// List of proposals to add new patricians to the system. 
+    /// List of decisions taken on the previous proposals.
     #[pallet::storage]
-    #[pallet::getter(fn pending_patrician_nominations)]
-    pub type PendingPatricianNominations<T: Config> = StorageValue<_, BoundedVec<T::AccountId, T::MaxPatricianNominations>, ValueQuery>;
-
-    /// List of proposals to add new blocks to the chain. Each proposal includes the proposed block 
-    /// and the account of the patrician responsible for the new block. 
-    #[pallet::storage]
-    #[pallet::getter(fn pending_block_proposals)]
-    pub type PendingBlockProposals<T: Config> = StorageValue<_, BoundedVec<(BlockNumberFor<T>, T::AccountId), T::MaxBlockProposals>, ValueQuery>;
+    #[pallet::getter(fn decisions)]
+    pub type Decisions<T: Config> = StorageMap<_, Blake2_128Concat, u32, BoundedVec<(T::AccountId, Decision), T::MaxDecisions>, ValueQuery>;
     
     /// Events that functions in this pallet can emit.
     ///
