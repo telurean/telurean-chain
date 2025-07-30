@@ -179,14 +179,18 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
+        /// Emitted when a new consul is proposed to be added to the system.
+        ConsulNominated { who: T::AccountId },
         /// Emitted when a new consul is added to the system.
-        NewConsulAdded { who: T::AccountId },
+        ConsulAdded { who: T::AccountId },
         /// Emitted when a consul is removed from the system.
         ConsulRemoved { who: T::AccountId },
         /// Emitted when a consul is assigned for the validation of a proposal.
         ConsulAssigned { who: T::AccountId, proposal: T::Hash },
+        /// Emitted when a new patrician is proposed to be added to the system.
+        PatricianNominated { who: T::AccountId },
         /// Emitted when a new patrician is added to the system.
-        NewPatricianAdded { who: T::AccountId },
+        PatricianAdded { who: T::AccountId },
         /// Emitted when a patrician is removed from the system.
         PatricianRemoved { who: T::AccountId },
         /// Emitted when a validator begins the process of reviewing a block (after the block appears or
