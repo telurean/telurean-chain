@@ -67,23 +67,25 @@ pub mod pallet {
     use super::*;
     use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
+    use core::fmt::Debug;
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
-        // Enumeración para las propuestas
-    #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+    /// Different types of proposals made by consuls and patricians. Each proposal is identified 
+    /// by a unique T::Hash derived from its content.
+    #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen, Debug)]
     #[scale_info(skip_type_params(T))]
     pub enum Proposal<T: Config> {
-        ConsulNomination(u32, T::AccountId, T::Moment),
-        PatricianNomination(u32, T::AccountId, T::Moment),
-        NewBlock(u32, BlockNumberFor<T>),
+        ConsulNomination(T::Hash, T::AccountId, T::Moment),
+        PatricianNomination(T::Hash, T::AccountId, T::Moment),
+        NewBlock(T::Hash, BlockNumberFor<T>),
     }
 
-    // Enumeración para las decisiones
-    #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
+    /// All possible decisions to be made by the consuls regarding the submitted proposals.
+    #[derive(Encode, Decode, DecodeWithMemTracking, TypeInfo, Clone, PartialEq, MaxEncodedLen, Debug)]
     pub enum Decision {
         Approved,
         Rejected,
@@ -116,15 +118,19 @@ pub mod pallet {
         type MaxTerms: Get<u32>;
 
         /// Type for the terms of office of consuls and patricians.
-        type Moment: Copy + PartialOrd + MaxEncodedLen + Encode + Decode + TypeInfo;
+        type Moment: Copy + PartialOrd + MaxEncodedLen + Encode + Decode + TypeInfo + Debug;
 
         /// Maximum limit required for the BoundedVec type corresponding to Proposals.
         #[pallet::constant]
         type MaxProposals: Get<u32>;
 
-        /// Maximum limit required for the BoundedVec type corresponding to Decisions.
+        /// Maximum limit required for the BoundedVec type corresponding to Assignments.
         #[pallet::constant]
-        type MaxDecisions: Get<u32>;
+        type MaxAssignments: Get<u32>;
+
+        /// Maximum limit required for the BoundedVec type corresponding to Assignments.
+        #[pallet::constant]
+        type MaxReasonLength: Get<u32>;
     }
 
     #[pallet::storage]
@@ -150,10 +156,15 @@ pub mod pallet {
     #[pallet::getter(fn proposals)]
     pub type Proposals<T: Config> = StorageValue<_, BoundedVec<(T::AccountId, Proposal<T>), T::MaxProposals>, ValueQuery>;
 
-    /// List of decisions taken on the previous proposals.
+    /// List of proposal validation assignments to consuls.
+    #[pallet::storage]
+    #[pallet::getter(fn assignments)]
+    pub type Assignments<T: Config> = StorageMap<_, Blake2_128Concat, T::Hash, BoundedVec<T::AccountId, T::MaxAssignments>, ValueQuery>;
+
+    /// List of decisions taken on the previous proposals indexed by proposal hash.
     #[pallet::storage]
     #[pallet::getter(fn decisions)]
-    pub type Decisions<T: Config> = StorageMap<_, Blake2_128Concat, u32, BoundedVec<(T::AccountId, Decision), T::MaxDecisions>, ValueQuery>;
+    pub type Decisions<T: Config> = StorageMap<_, Blake2_128Concat, T::Hash, BoundedVec<(T::AccountId, Decision), T::MaxAssignments>, ValueQuery>;
     
     /// Events that functions in this pallet can emit.
     ///
@@ -168,13 +179,38 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// A user has successfully set a new value.
-        SomethingStored {
-            /// The new value set.
-            something: u32,
-            /// The account who set the new value.
-            who: T::AccountId,
-        },
+        /// Emitted when a new consul is added to the system.
+        NewConsulAdded { who: T::AccountId },
+        /// Emitted when a consul is removed from the system.
+        ConsulRemoved { who: T::AccountId },
+        /// Emitted when a consul is assigned for the validation of a proposal.
+        ConsulAssigned { who: T::AccountId, proposal: T::Hash },
+        /// Emitted when a new patrician is added to the system.
+        NewPatricianAdded { who: T::AccountId },
+        /// Emitted when a patrician is removed from the system.
+        PatricianRemoved { who: T::AccountId },
+        /// Emitted when a validator begins the process of reviewing a block (after the block appears or
+        /// is reassigned due to a timeout). There may be multiple validators analyzing the same block, 
+        /// in which case this event is emitted for each of them.
+        BlockProposed { who: T::AccountId, number: BlockNumberFor<T> },
+        /// Emitted when the validator rejects the block, including a reason.
+        BlockRejected { who: T::AccountId, number: BlockNumberFor<T>, reason: Option<BoundedVec<u8, T::MaxReasonLength>> },
+        /// Emitted when the validator marks the block as potentially conflicting, including a reason and
+        /// a request for more information.
+        BlockNeedsInfo { who: T::AccountId, number: BlockNumberFor<T>, reason: Option<BoundedVec<u8, T::MaxReasonLength>> },
+        /// Emitted when a consul approves a block after the validation process.
+        BlockPreApproved { who: T::AccountId, number: BlockNumberFor<T> },
+        /// Emitted when all validators assigned to a block have approved it.
+        BlockApproved { who: T::AccountId, number: BlockNumberFor<T> },
+        /// Emitted when the term of an elite member is renewed.
+        TermRenewed { who: T::AccountId, term: T::Moment },
+        /// Emitted when an elite member ceases to be one due to the expiration of his term.
+        TermExpired { who: T::AccountId, term: T::Moment },
+        /// **Emitted if a consul does not respond before the established deadline, allowing the reassignment 
+        /// of a proposal or another decision.
+        DeadlinePassed { who: T::AccountId },
+        /// Emitted when a consul makes a decision on one of the pending proposals assigned to them.
+        NewDecision { who: T::AccountId, proposal: T::Hash, decision: Decision },
     }
 
     /// Errors that can be returned by this pallet.
@@ -244,7 +280,7 @@ pub mod pallet {
             Something::<T>::put(something);
 
             // Emit an event.
-            Self::deposit_event(Event::SomethingStored { something, who });
+            //Self::deposit_event(Event::SomethingStored { something, who });
 
             // Return a successful `DispatchResult`
             Ok(())

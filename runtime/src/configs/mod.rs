@@ -165,5 +165,6 @@ impl pallet_hvc::Config for Runtime {
 	type MaxTerms = ConstU32<100>;
     type Moment = u64;
     type MaxProposals = ConstU32<20>;
-    type MaxDecisions = ConstU32<50>;
+    type MaxAssignments = ConstU32<100>;
+    type MaxReasonLength = ConstU32<128>;
 }
