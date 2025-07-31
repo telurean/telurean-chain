@@ -1,41 +1,3 @@
-//! # Template Pallet
-//!
-//! A pallet with minimal functionality to help developers understand the essential components of
-//! writing a FRAME pallet. It is typically used in beginner tutorials or in Substrate template
-//! nodes as a starting point for creating a new pallet and **not meant to be used in production**.
-//!
-//! ## Overview
-//!
-//! This template pallet contains basic examples of:
-//! - declaring a storage item that stores a single `u32` value
-//! - declaring and using events
-//! - declaring and using errors
-//! - a dispatchable function that allows a user to set a new value to storage and emits an event
-//!   upon success
-//! - another dispatchable function that causes a custom error to be thrown
-//!
-//! Each pallet section is annotated with an attribute using the `#[pallet::...]` procedural macro.
-//! This macro generates the necessary code for a pallet to be aggregated into a FRAME runtime.
-//!
-//! Learn more about FRAME macros [here](https://docs.substrate.io/reference/frame-macros/).
-//!
-//! ### Pallet Sections
-//!
-//! The pallet sections in this template are:
-//!
-//! - A **configuration trait** that defines the types and parameters which the pallet depends on
-//!   (denoted by the `#[pallet::config]` attribute). See: [`Config`].
-//! - A **means to store pallet-specific data** (denoted by the `#[pallet::storage]` attribute).
-//!   See: [`storage_types`].
-//! - A **declaration of the events** this pallet emits (denoted by the `#[pallet::event]`
-//!   attribute). See: [`Event`].
-//! - A **declaration of the errors** that this pallet can throw (denoted by the `#[pallet::error]`
-//!   attribute). See: [`Error`].
-//! - A **set of dispatchable functions** that define the pallet's functionality (denoted by the
-//!   `#[pallet::call]` attribute). See: [`dispatchables`].
-//!
-//! Run `cargo doc --package pallet-template --open` to view this pallet's documentation.
-
 // We make sure this pallet uses `no_std` for compiling to Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -48,22 +10,19 @@ pub use pallet::*;
 mod mock;
 
 // This module contains the unit tests for this pallet.
-// Learn about pallet unit testing here: https://docs.substrate.io/test/unit-testing/
 #[cfg(test)]
 mod tests;
 
 // Every callable function or "dispatchable" a pallet exposes must have weight values that correctly
 // estimate a dispatchable's execution time. The benchmarking module is used to calculate weights
-// for each dispatchable and generates this pallet's weight.rs file. Learn more about benchmarking here: https://docs.substrate.io/test/benchmark/
+// for each dispatchable and generates this pallet's weight.rs file.
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
-// All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 #[frame_support::pallet]
 pub mod pallet {
-    // Import various useful types required by all FRAME pallets.
     use super::*;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::traits::Hash;
@@ -134,9 +93,6 @@ pub mod pallet {
         #[pallet::constant]
         type MaxReasonLength: Get<u32>;
     }
-
-    #[pallet::storage]
-    pub type Something<T> = StorageValue<_, u32>;
 
     /// List of all system validators, known as consuls. They are responsible for validating new blocks.
     #[pallet::storage]
@@ -277,42 +233,6 @@ pub mod pallet {
     /// The [`weight`] macro is used to assign a weight to each call.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        // #[pallet::call_index(0)]
-        // #[pallet::weight(T::WeightInfo::do_something())]
-        // pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-        //     // Check that the extrinsic was signed and get the signer.
-        //     let who = ensure_signed(origin)?;
-
-        //     // Update storage.
-        //     Something::<T>::put(something);
-
-        //     // Emit an event.
-        //     //Self::deposit_event(Event::SomethingStored { something, who });
-
-        //     // Return a successful `DispatchResult`
-        //     Ok(())
-        // }
-
-        // #[pallet::call_index(1)]
-        // #[pallet::weight(T::WeightInfo::cause_error())]
-        // pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-        //     let _who = ensure_signed(origin)?;
-
-        //     // Read a value from storage.
-        //     match Something::<T>::get() {
-        //         // Return an error if the value has not been set.
-        //         None => Err(Error::<T>::NoneValue.into()),
-        //         Some(old) => {
-        //             // Increment the value read from storage. This will cause an error in the event
-        //             // of overflow.
-        //             let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-        //             // Update the value in storage with the incremented result.
-        //             Something::<T>::put(new);
-        //             Ok(())
-        //         },
-        //     }
-        // }
-        
         /// Proposes the nomination of an account from the patrician group as a consul.
         #[pallet::call_index(0)]
         #[pallet::weight(10_000)]
