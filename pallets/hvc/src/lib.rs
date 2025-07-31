@@ -235,7 +235,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Proposes the nomination of an account from the patrician group as a consul.
         #[pallet::call_index(0)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::propose_consul())]
         pub fn propose_consul(
             origin: OriginFor<T>,
             candidate: T::AccountId,

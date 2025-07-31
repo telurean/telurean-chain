@@ -34,8 +34,7 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for pallet_hvc.
 pub trait WeightInfo {
-	fn do_something() -> Weight;
-	fn cause_error() -> Weight;
+	fn propose_consul() -> Weight;
 }
 
 /// Weights for pallet_hvc using the Substrate node and recommended hardware.
