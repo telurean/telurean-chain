@@ -18,6 +18,7 @@ frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
 scale-info = { features = ["derive"], workspace = true }
+pallet-timestamp = { workspace = true }
 
 [dev-dependencies]
 sp-core = { default-features = true, workspace = true }

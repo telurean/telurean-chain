@@ -66,6 +66,7 @@ pub mod pallet {
     // Import various useful types required by all FRAME pallets.
     use super::*;
     use frame_support::pallet_prelude::*;
+    use frame_support::sp_runtime::traits::Hash;
     use frame_system::pallet_prelude::*;
     use core::fmt::Debug;
 
@@ -98,7 +99,7 @@ pub mod pallet {
     /// These types are defined generically and made concrete when the pallet is declared in the
     /// `runtime/src/lib.rs` file of your chain.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::Config + pallet_timestamp::Config {
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
@@ -117,8 +118,9 @@ pub mod pallet {
         #[pallet::constant]
         type MaxTerms: Get<u32>;
 
-        /// Type for the terms of office of consuls and patricians.
-        type Moment: Copy + PartialOrd + MaxEncodedLen + Encode + Decode + TypeInfo + Debug;
+        /// Lifetime of proposals in days, after which they expire.
+        #[pallet::constant]
+        type ProposalDuration: Get<u32>;
 
         /// Maximum limit required for the BoundedVec type corresponding to Proposals.
         #[pallet::constant]
@@ -235,6 +237,8 @@ pub mod pallet {
         NotAssignedConsul,
         /// The account attempting to act as a consul is not a valid consul. This error takes precedence over NotAssignedConsul.
         InvalidConsul,
+        /// The account intended to be promoted to consul is already a consul.
+        AlreadyConsul,
         /// The maximum number of consuls has been reached, and an attempt was made to add another.
         TooManyConsuls,
         /// The account attempting to propose a block is not a valid patrician.
@@ -249,10 +253,14 @@ pub mod pallet {
         InvalidBlockState,
         /// The proposal is either invalid or missing.
         InvalidProposal,
+        /// The maximum number of proposals has been reached, and an attempt was made to add another.
+        TooManyProposals,
         /// The consul did not respond before the established deadline.
         DeadlinePassed,
         /// The required signature is invalid or missing.
         InvalidSignature,
+        /// The given string exceeds the maximum number of characters.
+        StringTooLong,
 }
 
     /// The pallet's dispatchable functions ([`Call`]s).
@@ -269,58 +277,82 @@ pub mod pallet {
     /// The [`weight`] macro is used to assign a weight to each call.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// An example dispatchable that takes a single u32 value as a parameter, writes the value
-        /// to storage and emits an event.
-        ///
-        /// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
-        /// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
+        // #[pallet::call_index(0)]
+        // #[pallet::weight(T::WeightInfo::do_something())]
+        // pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
+        //     // Check that the extrinsic was signed and get the signer.
+        //     let who = ensure_signed(origin)?;
+
+        //     // Update storage.
+        //     Something::<T>::put(something);
+
+        //     // Emit an event.
+        //     //Self::deposit_event(Event::SomethingStored { something, who });
+
+        //     // Return a successful `DispatchResult`
+        //     Ok(())
+        // }
+
+        // #[pallet::call_index(1)]
+        // #[pallet::weight(T::WeightInfo::cause_error())]
+        // pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
+        //     let _who = ensure_signed(origin)?;
+
+        //     // Read a value from storage.
+        //     match Something::<T>::get() {
+        //         // Return an error if the value has not been set.
+        //         None => Err(Error::<T>::NoneValue.into()),
+        //         Some(old) => {
+        //             // Increment the value read from storage. This will cause an error in the event
+        //             // of overflow.
+        //             let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
+        //             // Update the value in storage with the incremented result.
+        //             Something::<T>::put(new);
+        //             Ok(())
+        //         },
+        //     }
+        // }
+        
+        /// Proposes the nomination of an account from the patrician group as a consul.
         #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::do_something())]
-        pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
-            let who = ensure_signed(origin)?;
+        #[pallet::weight(10_000)]
+        pub fn propose_consul(
+            origin: OriginFor<T>,
+            candidate: T::AccountId,
+        ) -> DispatchResult {
+            // Sanity checks.
+            let proposer = ensure_signed(origin)?;
+            ensure!(Consuls::<T>::get().contains(&proposer), Error::<T>::InvalidConsul);
+            ensure!(Patricians::<T>::get().contains(&candidate), Error::<T>::InvalidPatrician);
+            ensure!(!Consuls::<T>::get().contains(&candidate), Error::<T>::AlreadyConsul);
 
-            // Update storage.
-            Something::<T>::put(something);
+            // Calculates the deadline.
+            let current_time = <pallet_timestamp::Pallet<T>>::get();
+            let expiry = current_time + T::ProposalDuration::get().into();
 
-            // Emit an event.
-            //Self::deposit_event(Event::SomethingStored { something, who });
+            // Creates proposal and calculates hash.
+            let proposal_without_hash = Proposal::<T>::ConsulNomination(Default::default(), candidate.clone(), expiry);
+            let proposal_hash = T::Hashing::hash_of(&(proposer.clone(), &proposal_without_hash));
 
-            // Return a successful `DispatchResult`
+            // Gets the current proposals and checks the limit.
+            let mut proposals = Proposals::<T>::get();
+            ensure!(
+                proposals.len() < T::MaxProposals::get() as usize,
+                Error::<T>::TooManyProposals
+            );
+
+            // Adds the new proposal to the BoundedVec.
+            let proposal = Proposal::<T>::ConsulNomination(proposal_hash, candidate.clone(), expiry);
+            proposals
+                .try_push((proposer.clone(), proposal))
+                .map_err(|_| Error::<T>::TooManyProposals)?;
+
+            // Updates the storage with the modified BoundedVec.
+            Proposals::<T>::put(proposals);
+
+            Self::deposit_event(Event::ConsulNominated { who: candidate });
+
             Ok(())
-        }
-
-        /// An example dispatchable that may throw a custom error.
-        ///
-        /// It checks that the caller is a signed origin and reads the current value from the
-        /// `Something` storage item. If a current value exists, it is incremented by 1 and then
-        /// written back to storage.
-        ///
-        /// ## Errors
-        ///
-        /// The function will return an error under the following conditions:
-        ///
-        /// - If no value has been set ([`Error::NoneValue`])
-        /// - If incrementing the value in storage causes an arithmetic overflow
-        ///   ([`Error::StorageOverflow`])
-        #[pallet::call_index(1)]
-        #[pallet::weight(T::WeightInfo::cause_error())]
-        pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-            let _who = ensure_signed(origin)?;
-
-            // Read a value from storage.
-            match Something::<T>::get() {
-                // Return an error if the value has not been set.
-                None => Err(Error::<T>::NoneValue.into()),
-                Some(old) => {
-                    // Increment the value read from storage. This will cause an error in the event
-                    // of overflow.
-                    let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-                    // Update the value in storage with the incremented result.
-                    Something::<T>::put(new);
-                    Ok(())
-                },
-            }
         }
     }
 }
