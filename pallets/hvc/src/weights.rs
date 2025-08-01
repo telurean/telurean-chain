@@ -40,8 +40,8 @@ pub trait WeightInfo {
 /// Weights for pallet_hvc using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	/// Storage: PalletHvc Something (r:0 w:1)
-	/// Proof: PalletHvc Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Hvc Something (r:0 w:1)
+	/// Proof: Hvc Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
 	fn propose_consul() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
@@ -54,8 +54,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	/// Storage: PalletHvc Something (r:0 w:1)
-	/// Proof: PalletHvc Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: Hvc Something (r:0 w:1)
+	/// Proof: Hvc Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
 	fn propose_consul() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`

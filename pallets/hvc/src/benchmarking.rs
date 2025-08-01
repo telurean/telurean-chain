@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(unused)]
-use crate::Pallet as PalletHvc;
+use crate::Pallet as Hvc;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
@@ -19,5 +19,5 @@ mod benchmarks {
 		// assert_eq!(Something::<T>::get(), Some(value));
 	}
 
-	impl_benchmark_test_suite!(PalletHvc, crate::mock::new_test_ext(), crate::mock::Test);
+	impl_benchmark_test_suite!(Hvc, crate::mock::new_test_ext(), crate::mock::Test);
 }
