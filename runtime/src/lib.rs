@@ -224,5 +224,5 @@ mod runtime {
 
 	// Include the custom logic from the pallet-hvc in the runtime.
 	#[runtime::pallet_index(7)]
-	pub type Template = pallet_hvc;
+	pub type PalletHvc = pallet_hvc;
 }

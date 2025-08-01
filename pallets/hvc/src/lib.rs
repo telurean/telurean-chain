@@ -39,11 +39,8 @@ pub mod pallet {
     // Re-exports types from the `types` module.
     pub use super::types::{Proposal, Decision};
 
-    /// The pallet's configuration trait.
-    ///
-    /// All our types and constants a pallet depends on must be declared here.
-    /// These types are defined generically and made concrete when the pallet is declared in the
-    /// `runtime/src/lib.rs` file of your chain.
+    /// All types and constants a pallet depends on must be declared here. These types are defined generically
+    /// and made concrete when the pallet is declared in the `runtime/src/lib.rs` file of your chain.
     #[pallet::config]
     pub trait Config: frame_system::Config + pallet_timestamp::Config {
         /// The overarching runtime event type.
@@ -111,14 +108,7 @@ pub mod pallet {
     #[pallet::getter(fn decisions)]
     pub type Decisions<T: Config> = StorageMap<_, Blake2_128Concat, T::Hash, BoundedVec<(T::AccountId, Decision), T::MaxAssignments>, ValueQuery>;
     
-    /// Events that functions in this pallet can emit.
-    ///
-    /// Events are a simple means of indicating to the outside world (such as dApps, chain explorers
-    /// or other users) that some notable update in the runtime has occurred. In a FRAME pallet, the
-    /// documentation for each event field and its parameters is added to a node's metadata so it
-    /// can be used by external interfaces or tools.
-    ///
-    ///    The `generate_deposit` macro generates a function on `Pallet` called `deposit_event` which
+    /// The `generate_deposit` macro generates a function on `Pallet` called `deposit_event` which
     /// will convert the event type of your pallet into `RuntimeEvent` (declared in the pallet's
     /// [`Config`] trait) and deposit it using [`frame_system::Pallet::deposit_event`].
     #[pallet::event]
