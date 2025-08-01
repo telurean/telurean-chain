@@ -5907,7 +5907,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-hvc"
-version = "0.1.0"
+version = "0.1.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9418,7 +9418,7 @@ dependencies = [
 
 [[package]]
 name = "solochain-template-node"
-version = "0.1.0"
+version = "0.1.0-dev"
 dependencies = [
  "clap",
  "frame-benchmarking-cli",
@@ -9459,7 +9459,7 @@ dependencies = [
 
 [[package]]
 name = "solochain-template-runtime"
-version = "0.1.0"
+version = "0.1.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",

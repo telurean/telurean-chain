@@ -13,6 +13,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+// Types import.
+mod types;
+
 // Every callable function or "dispatchable" a pallet exposes must have weight values that correctly
 // estimate a dispatchable's execution time. The benchmarking module is used to calculate weights
 // for each dispatchable and generates this pallet's weight.rs file.
@@ -20,14 +23,6 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 pub use weights::*;
-
-// Submodules import.
-mod config;
-mod events;
-mod errors;
-mod storage;
-mod dispatchables;
-mod types;
 
 #[frame_support::pallet]
 pub mod pallet {

@@ -1,6 +1,6 @@
 [workspace.package]
 license = "MIT-0"
-authors = ["Telurean <admin@telurean.network>"]
+authors = ["Telurean <info@telurean.network>"]
 homepage = "https://github.com/telurean/telurean-chain"
 repository = "https://github.com/telurean/telurean-chain.git"
 edition = "2021"
