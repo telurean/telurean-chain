@@ -72,6 +72,7 @@ sp-storage = { version = "22.0.0", default-features = false }
 sp-transaction-pool = { version = "36.0.0", default-features = false }
 sp-version = { version = "39.0.0", default-features = false }
 substrate-wasm-builder = { version = "26.0.1", default-features = false }
+pallet-hvc = { version = "0.1.0-dev", default-features = false, path = "pallets/hvc"}
 
 [profile.release]
 opt-level = 3
