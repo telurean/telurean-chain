@@ -32,7 +32,7 @@ use frame_support::{
 		IdentityFee, Weight,
 	},
 };
-use frame_system::limits::{BlockLength, BlockWeights};
+use frame_system::{EnsureRoot, EnsureSigned, limits::{BlockLength, BlockWeights}};
 use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{traits::One, Perbill};
@@ -157,8 +157,26 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
-/// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_uniques::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type CollectionId = u32;
+    type ItemId = u32;
+    type Currency = Balances; // Para pagos relacionados con creación/emisión
+    type ForceOrigin = EnsureRoot<AccountId>; // Para acciones privilegiadas
+    type CreateOrigin = EnsureSigned<AccountId>; // Quién puede crear colecciones
+    type Locker = (); // Bloqueo de NFTs, si es necesario
+    type CollectionDeposit = ConstU128<1_000_000_000_000>; // Depósito para crear colecciones
+    type ItemDeposit = ConstU128<100_000_000_000>; // Depósito por NFT
+    type MetadataDepositBase = ConstU128<100_000_000_000>;
+    type AttributeDepositBase = ConstU128<10_000_000_000>;
+    type DepositPerByte = ConstU128<1_000_000_000>;
+    type StringLimit = ConstU32<128>; // Límite para metadatos
+    type KeyLimit = ConstU32<64>;
+    type ValueLimit = ConstU32<256>;
+    type WeightInfo = pallet_uniques::weights::SubstrateWeight<Runtime>;
 }
