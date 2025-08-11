@@ -157,11 +157,6 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
-}
-
 impl pallet_uniques::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type CollectionId = u32;
@@ -179,4 +174,19 @@ impl pallet_uniques::Config for Runtime {
     type KeyLimit = ConstU32<64>;
     type ValueLimit = ConstU32<256>;
     type WeightInfo = pallet_uniques::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_nft_hierarchy::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_nft_hierarchy::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_nft_metadata::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_nft_metadata::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_template::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 }

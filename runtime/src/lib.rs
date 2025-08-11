@@ -222,11 +222,15 @@ mod runtime {
 	#[runtime::pallet_index(6)]
 	pub type Sudo = pallet_sudo;
 
-	// Include the custom logic from the pallet-template in the runtime.
 	#[runtime::pallet_index(7)]
-	pub type Template = pallet_template;
-
-	// Include the custom logic from the pallet-template in the runtime.
-	#[runtime::pallet_index(8)]
 	pub type Uniques = pallet_uniques;
+
+	#[runtime::pallet_index(8)]
+	pub type NftHierarchy = pallet_nft_hierarchy;
+
+	#[runtime::pallet_index(9)]
+	pub type NftMetadata = pallet_nft_metadata;
+
+	#[runtime::pallet_index(10)]
+	pub type Template = pallet_template;
 }
