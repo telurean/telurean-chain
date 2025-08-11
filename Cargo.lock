@@ -5906,6 +5906,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-metadata"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-nft-hierarchy"
 version = "0.1.0-dev"
 dependencies = [
@@ -10723,6 +10737,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
+ "pallet-metadata",
  "pallet-nft-hierarchy",
  "pallet-sudo",
  "pallet-template",
