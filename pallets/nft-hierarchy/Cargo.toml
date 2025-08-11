@@ -1,5 +1,5 @@
 [package]
-name = "pallet-hvc"
+name = "pallet-nft-hierarchy"
 description = "Human-Validated Consensus pallet."
 version = "0.1.0-dev"
 license = "Unlicense"
