@@ -26,7 +26,7 @@ pallet-aura.workspace = true
 pallet-balances.workspace = true
 pallet-grandpa.workspace = true
 pallet-nft-hierarchy.workspace = true
-pallet-metadata.workspace = true
+pallet-nft-metadata.workspace = true
 pallet-sudo.workspace = true
 pallet-template.workspace = true
 pallet-timestamp.workspace = true
@@ -69,7 +69,7 @@ std = [
 	"pallet-balances/std",
 	"pallet-grandpa/std",
     "pallet-nft-hierarchy/std",
-    "pallet-metadata/std",
+    "pallet-nft-metadata/std",
 	"pallet-sudo/std",
 	"pallet-template/std",
 	"pallet-timestamp/std",

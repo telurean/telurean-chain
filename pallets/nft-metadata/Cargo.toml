@@ -1,5 +1,5 @@
 [package]
-name = "pallet-metadata"
+name = "pallet-nft-metadata"
 description = "FRAME pallet template for defining custom runtime logic."
 version = "0.1.0"
 license = "Unlicense"

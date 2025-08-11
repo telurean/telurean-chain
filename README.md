@@ -18,7 +18,7 @@ The Minimum Viable Product (MVP) focuses on core NFT functionalities, with plans
 The current MVP of Telurean Chain includes the following core functionalities:
 - **NFT Creation and Management**: Create, transfer, and burn NFTs representing characters, items, or other game elements using `pallet_uniques`.
 - **Hierarchical Relationships**: Establish parent-child relationships (e.g., a character NFT owning an item NFT) with `pallet_nft_hierarchy`.
-- **Dynamic Attributes**: Store and modify attributes for NFTs (e.g., character stats, status conditions) using `pallet_metadata`.
+- **Dynamic Attributes**: Store and modify attributes for NFTs (e.g., character stats, status conditions) using `pallet_nft-metadata`.
 
 ### Planned Features
 - Support for advanced game mechanics.
