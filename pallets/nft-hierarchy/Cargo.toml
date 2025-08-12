@@ -1,6 +1,6 @@
 [package]
 name = "pallet-nft-hierarchy"
-description = "Human-Validated Consensus pallet."
+description = "Management of NFT hierarchy, where lower-level NFTs inherit the properties of higher-level NFTs."
 version = "0.1.0-dev"
 license = "Unlicense"
 authors.workspace = true
@@ -17,6 +17,7 @@ codec = { features = ["derive"], workspace = true }
 frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+pallet-uniques.workspace = true
 scale-info = { features = ["derive"], workspace = true }
 
 [dev-dependencies]
@@ -31,6 +32,7 @@ std = [
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
+    "pallet-uniques/std",
 	"scale-info/std",
 ]
 runtime-benchmarks = [
