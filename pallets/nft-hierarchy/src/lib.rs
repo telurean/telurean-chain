@@ -164,7 +164,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::create_child())]
         pub fn create_child(
             origin: OriginFor<T>,
             parent_collection: T::CollectionId,
@@ -205,7 +205,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_child())]
         pub fn remove_child(
             origin: OriginFor<T>,
             parent_collection: T::CollectionId,
