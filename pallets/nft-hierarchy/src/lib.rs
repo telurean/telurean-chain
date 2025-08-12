@@ -42,6 +42,9 @@
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
+// Types import.
+mod types;
+
 // FRAME pallets require their own "mock runtimes" to be able to run unit tests. This module
 // contains a mock runtime specific for testing this pallet's functionality.
 #[cfg(test)]
@@ -65,8 +68,10 @@ pub use weights::*;
 pub mod pallet {
 	// Import various useful types required by all FRAME pallets.
 	use super::*;
+    use crate::types::NftType;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+    use frame_support::storage::Key;
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
@@ -79,19 +84,29 @@ pub mod pallet {
 	/// These types are defined generically and made concrete when the pallet is declared in the
 	/// `runtime/src/lib.rs` file of your chain.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_uniques::Config {
 		/// The overarching runtime event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// A type representing the weights required by the dispatchables of this pallet.
 		type WeightInfo: WeightInfo;
 	}
 
-	/// A storage item for this pallet.
-	///
-	/// In this template, we are declaring a storage item called `Something` that stores a single
-	/// `u32` value. Learn more about runtime storage here: <https://docs.substrate.io/build/runtime-storage/>
-	#[pallet::storage]
-	pub type Something<T> = StorageValue<_, u32>;
+	/// Map where each identified NFT corresponds to its type.
+    #[pallet::storage]
+    pub type NftTypes<T: Config> = StorageMap<_, Blake2_128Concat, (T::CollectionId, T::ItemId), NftType, ValueQuery>;
+
+    /// Map a parent NFT (collection and ID) to its children (collection and ID). Use a boolean to 
+    /// indicate the existence of the relationship.
+    #[pallet::storage]
+    pub type Hierarchy<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, T::CollectionId>,
+			Key<Twox64Concat, T::ItemId>,
+			Key<Twox64Concat, (T::CollectionId, T::ItemId)>,
+		),
+		Value = bool,
+		QueryKind = ValueQuery,
+    >;
 
 	/// Events that functions in this pallet can emit.
 	///
@@ -106,13 +121,16 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// A user has successfully set a new value.
-		SomethingStored {
-			/// The new value set.
-			something: u32,
-			/// The account who set the new value.
-			who: T::AccountId,
-		},
+        ChildAdded {
+            parent: (T::CollectionId, T::ItemId),
+            child: (T::CollectionId, T::ItemId),
+            who: T::AccountId,
+        },
+        ChildRemoved {
+            parent: (T::CollectionId, T::ItemId),
+            child: (T::CollectionId, T::ItemId),
+            who: T::AccountId,
+        },
 	}
 
 	/// Errors that can be returned by this pallet.
@@ -125,10 +143,10 @@ pub mod pallet {
 	/// information.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The value retrieved was `None` as no value was previously set.
-		NoneValue,
-		/// There was an attempt to increment the value in storage over `u32::MAX`.
-		StorageOverflow,
+        TokenNotFound,
+        NotOwner,
+        InvalidNftType,
+        HierarchyNotAllowed,
 	}
 
 	/// The pallet's dispatchable functions ([`Call`]s).
@@ -145,58 +163,78 @@ pub mod pallet {
 	/// The [`weight`] macro is used to assign a weight to each call.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a single u32 value as a parameter, writes the value
-		/// to storage and emits an event.
-		///
-		/// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
-		/// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::do_something())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			let who = ensure_signed(origin)?;
+        #[pallet::weight(10_000)]
+        pub fn create_child(
+            origin: OriginFor<T>,
+            parent_collection: T::CollectionId,
+            parent_item: T::ItemId,
+            child_collection: T::CollectionId,
+            child_item: T::ItemId,
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
 
-			// Update storage.
-			Something::<T>::put(something);
+            // Verificar que el padre existe y es una Entity
+            ensure!(
+                pallet_uniques::Pallet::<T>::owner(parent_collection.clone(), parent_item).is_some(),
+                Error::<T>::TokenNotFound
+            );
+            ensure!(
+                NftTypes::<T>::get((parent_collection.clone(), parent_item)) == NftType::Entity,
+                Error::<T>::InvalidNftType
+            );
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
+            // Verificar que el hijo existe y es un Character
+            ensure!(
+                pallet_uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
+                Error::<T>::NotOwner
+            );
+            ensure!(
+                NftTypes::<T>::get((child_collection.clone(), child_item)) == NftType::Character,
+                Error::<T>::InvalidNftType
+            );
 
-			// Return a successful `DispatchResult`
-			Ok(())
-		}
+            // Crear relación padre-hijo
+            Hierarchy::<T>::insert((parent_collection.clone(), parent_item, (child_collection.clone(), child_item)), true);
+            Self::deposit_event(Event::ChildAdded {
+                parent: (parent_collection, parent_item),
+                child: (child_collection, child_item),
+                who,
+            });
+            Ok(())
+        }
 
-		/// An example dispatchable that may throw a custom error.
-		///
-		/// It checks that the caller is a signed origin and reads the current value from the
-		/// `Something` storage item. If a current value exists, it is incremented by 1 and then
-		/// written back to storage.
-		///
-		/// ## Errors
-		///
-		/// The function will return an error under the following conditions:
-		///
-		/// - If no value has been set ([`Error::NoneValue`])
-		/// - If incrementing the value in storage causes an arithmetic overflow
-		///   ([`Error::StorageOverflow`])
-		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+        #[pallet::call_index(1)]
+        #[pallet::weight(10_000)]
+        pub fn remove_child(
+            origin: OriginFor<T>,
+            parent_collection: T::CollectionId,
+            parent_item: T::ItemId,
+            child_collection: T::CollectionId,
+            child_item: T::ItemId,
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
 
-			// Read a value from storage.
-			match Something::<T>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage. This will cause an error in the event
-					// of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					Something::<T>::put(new);
-					Ok(())
-				},
-			}
-		}
+            // Verificar que el hijo existe y pertenece al llamador
+            ensure!(
+                pallet_uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
+                Error::<T>::NotOwner
+            );
+
+            // Verificar que la relación existe
+            ensure!(
+                Hierarchy::<T>::contains_key((parent_collection.clone(), parent_item, (child_collection.clone(), child_item))),
+                Error::<T>::HierarchyNotAllowed
+            );
+
+            // Eliminar relación
+            Hierarchy::<T>::remove((parent_collection.clone(), parent_item, (child_collection.clone(), child_item)));
+            Self::deposit_event(Event::ChildRemoved {
+                parent: (parent_collection, parent_item),
+                child: (child_collection, child_item),
+                who,
+            });
+            Ok(())
+        }
 	}
 }
