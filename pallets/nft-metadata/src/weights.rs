@@ -34,16 +34,14 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for pallet_template.
 pub trait WeightInfo {
-	fn do_something() -> Weight;
-	fn cause_error() -> Weight;
+	fn set_metadata() -> Weight;
+	fn clear_metadata() -> Weight;
 }
 
 /// Weights for pallet_template using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	/// Storage: Template Something (r:0 w:1)
-	/// Proof: Template Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn do_something() -> Weight {
+	fn set_metadata() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
@@ -51,9 +49,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(9_000_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	/// Storage: Template Something (r:1 w:1)
-	/// Proof: Template Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn cause_error() -> Weight {
+	fn clear_metadata() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `32`
 		//  Estimated: `1489`
@@ -66,9 +62,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	/// Storage: Template Something (r:0 w:1)
-	/// Proof: Template Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn do_something() -> Weight {
+	fn set_metadata() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
@@ -76,9 +70,7 @@ impl WeightInfo for () {
 		Weight::from_parts(9_000_000, 0)
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
-	/// Storage: Template Something (r:1 w:1)
-	/// Proof: Template Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn cause_error() -> Weight {
+	fn clear_metadata() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `32`
 		//  Estimated: `1489`

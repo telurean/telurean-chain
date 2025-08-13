@@ -67,6 +67,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+    use pallet_uniques::{self as uniques};
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
@@ -79,19 +80,28 @@ pub mod pallet {
 	/// These types are defined generically and made concrete when the pallet is declared in the
 	/// `runtime/src/lib.rs` file of your chain.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + uniques::Config {
 		/// The overarching runtime event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// A type representing the weights required by the dispatchables of this pallet.
 		type WeightInfo: WeightInfo;
-	}
 
-	/// A storage item for this pallet.
-	///
-	/// In this template, we are declaring a storage item called `Something` that stores a single
-	/// `u32` value. Learn more about runtime storage here: <https://docs.substrate.io/build/runtime-storage/>
-	#[pallet::storage]
-	pub type Something<T> = StorageValue<_, u32>;
+        type KeyLimit: Get<u32>;
+        type ValueLimit: Get<u32>;
+        type AttributeLimit: Get<u32>;
+    }
+
+	/// Storage for metadata as key-value pairs.
+    #[pallet::storage]
+    pub type Metadata<T: Config> = StorageDoubleMap<
+        _,
+        Blake2_128Concat,
+        T::CollectionId,
+        Blake2_128Concat,
+        T::ItemId,
+        BoundedVec<(BoundedVec<u8, <T as pallet::Config>::KeyLimit>, BoundedVec<u8, <T as pallet::Config>::ValueLimit>), T::AttributeLimit>,
+        ValueQuery
+    >;
 
 	/// Events that functions in this pallet can emit.
 	///
@@ -105,15 +115,18 @@ pub mod pallet {
 	/// [`Config`] trait) and deposit it using [`frame_system::Pallet::deposit_event`].
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// A user has successfully set a new value.
-		SomethingStored {
-			/// The new value set.
-			something: u32,
-			/// The account who set the new value.
-			who: T::AccountId,
-		},
-	}
+    pub enum Event<T: Config> {
+        MetadataSet {
+            collection: T::CollectionId,
+            item: T::ItemId,
+            who: T::AccountId,
+        },
+        MetadataCleared {
+            collection: T::CollectionId,
+            item: T::ItemId,
+            who: T::AccountId,
+        },
+    }
 
 	/// Errors that can be returned by this pallet.
 	///
@@ -124,12 +137,13 @@ pub mod pallet {
 	/// This type of runtime error can be up to 4 bytes in size should you want to return additional
 	/// information.
 	#[pallet::error]
-	pub enum Error<T> {
-		/// The value retrieved was `None` as no value was previously set.
-		NoneValue,
-		/// There was an attempt to increment the value in storage over `u32::MAX`.
-		StorageOverflow,
-	}
+    pub enum Error<T> {
+        TokenNotFound,
+        NotOwner,
+        AttributeLimitReached,
+        KeyTooLong,
+        ValueTooLong,
+    }
 
 	/// The pallet's dispatchable functions ([`Call`]s).
 	///
@@ -145,58 +159,47 @@ pub mod pallet {
 	/// The [`weight`] macro is used to assign a weight to each call.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a single u32 value as a parameter, writes the value
-		/// to storage and emits an event.
-		///
-		/// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
-		/// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
-		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::do_something())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			let who = ensure_signed(origin)?;
+        #[pallet::call_index(0)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::set_metadata())]
+        pub fn set_metadata(
+            origin: OriginFor<T>,
+            collection: T::CollectionId,
+            item: T::ItemId,
+            attributes: BoundedVec<(BoundedVec<u8, <T as pallet::Config>::KeyLimit>, BoundedVec<u8, <T as pallet::Config>::ValueLimit>), T::AttributeLimit>,
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
 
-			// Update storage.
-			Something::<T>::put(something);
+            // Verificar que el NFT existe y pertenece al llamador
+            ensure!(
+                uniques::Pallet::<T>::owner(collection.clone(), item) == Some(who.clone()),
+                Error::<T>::NotOwner
+            );
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
+            // Establecer metadatos
+            Metadata::<T>::insert(collection.clone(), item, attributes);
+            Self::deposit_event(Event::MetadataSet { collection, item, who });
+            Ok(())
+        }
 
-			// Return a successful `DispatchResult`
-			Ok(())
-		}
+        #[pallet::call_index(1)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::clear_metadata())]
+        pub fn clear_metadata(
+            origin: OriginFor<T>,
+            collection: T::CollectionId,
+            item: T::ItemId,
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
 
-		/// An example dispatchable that may throw a custom error.
-		///
-		/// It checks that the caller is a signed origin and reads the current value from the
-		/// `Something` storage item. If a current value exists, it is incremented by 1 and then
-		/// written back to storage.
-		///
-		/// ## Errors
-		///
-		/// The function will return an error under the following conditions:
-		///
-		/// - If no value has been set ([`Error::NoneValue`])
-		/// - If incrementing the value in storage causes an arithmetic overflow
-		///   ([`Error::StorageOverflow`])
-		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+            // Verificar que el NFT existe y pertenece al llamador
+            ensure!(
+                uniques::Pallet::<T>::owner(collection.clone(), item) == Some(who.clone()),
+                Error::<T>::NotOwner
+            );
 
-			// Read a value from storage.
-			match Something::<T>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage. This will cause an error in the event
-					// of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					Something::<T>::put(new);
-					Ok(())
-				},
-			}
-		}
+            // Limpiar metadatos
+            Metadata::<T>::remove(collection.clone(), item);
+            Self::deposit_event(Event::MetadataCleared { collection, item, who });
+            Ok(())
+        }
 	}
 }

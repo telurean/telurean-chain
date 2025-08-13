@@ -184,6 +184,9 @@ impl pallet_nft_hierarchy::Config for Runtime {
 impl pallet_nft_metadata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_nft_metadata::weights::SubstrateWeight<Runtime>;
+    type KeyLimit = ConstU32<64>;
+    type ValueLimit = ConstU32<256>;
+    type AttributeLimit = ConstU32<10>;
 }
 
 impl pallet_template::Config for Runtime {
