@@ -229,7 +229,7 @@ mod runtime {
 	pub type NftHierarchy = pallet_nft_hierarchy;
 
 	#[runtime::pallet_index(9)]
-	pub type NftMetadata = pallet_nft_metadata;
+	pub type NftMetadata = pallet_nft_attributes;
 
 	#[runtime::pallet_index(10)]
 	pub type Template = pallet_template;

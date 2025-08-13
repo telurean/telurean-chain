@@ -5906,8 +5906,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-nft-hierarchy"
-version = "0.1.0-dev"
+name = "pallet-nft-attributes"
+version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5921,8 +5921,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-nft-metadata"
-version = "0.1.0"
+name = "pallet-nft-hierarchy"
+version = "0.1.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10754,8 +10754,8 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
+ "pallet-nft-attributes",
  "pallet-nft-hierarchy",
- "pallet-nft-metadata",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
