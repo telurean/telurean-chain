@@ -188,8 +188,3 @@ impl pallet_nft_attributes::Config for Runtime {
     type ValueLimit = ConstU32<256>;
     type AttributeLimit = ConstU32<10>;
 }
-
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
-}

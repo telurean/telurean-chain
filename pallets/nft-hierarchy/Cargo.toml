@@ -1,6 +1,6 @@
 [package]
 name = "pallet-nft-hierarchy"
-description = "Management of NFT hierarchy, where lower-level NFTs inherit the properties of higher-level NFTs."
+description = "Management of NFTs structure."
 version = "0.1.0-dev"
 license = "Unlicense"
 authors.workspace = true
