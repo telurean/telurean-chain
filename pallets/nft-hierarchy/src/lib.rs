@@ -72,6 +72,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
     use frame_support::storage::Key;
+    use pallet_uniques::{self as uniques};
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
@@ -84,7 +85,7 @@ pub mod pallet {
 	/// These types are defined generically and made concrete when the pallet is declared in the
 	/// `runtime/src/lib.rs` file of your chain.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_uniques::Config {
+	pub trait Config: frame_system::Config + uniques::Config {
 		/// The overarching runtime event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// A type representing the weights required by the dispatchables of this pallet.
@@ -176,7 +177,7 @@ pub mod pallet {
 
             // Verificar que el padre existe y es una Entity
             ensure!(
-                pallet_uniques::Pallet::<T>::owner(parent_collection.clone(), parent_item).is_some(),
+                uniques::Pallet::<T>::owner(parent_collection.clone(), parent_item).is_some(),
                 Error::<T>::TokenNotFound
             );
             ensure!(
@@ -186,7 +187,7 @@ pub mod pallet {
 
             // Verificar que el hijo existe y es un Character
             ensure!(
-                pallet_uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
             ensure!(
@@ -217,7 +218,7 @@ pub mod pallet {
 
             // Verificar que el hijo existe y pertenece al llamador
             ensure!(
-                pallet_uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
