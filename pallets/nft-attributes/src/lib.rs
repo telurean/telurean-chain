@@ -91,9 +91,9 @@ pub mod pallet {
         type AttributeLimit: Get<u32>;
     }
 
-	/// Storage for metadata as key-value pairs.
+	/// Storage for attributes as key-value pairs.
     #[pallet::storage]
-    pub type Metadata<T: Config> = StorageDoubleMap<
+    pub type Attributes<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
         T::CollectionId,
@@ -116,12 +116,12 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        MetadataSet {
+        AttributesSet {
             collection: T::CollectionId,
             item: T::ItemId,
             who: T::AccountId,
         },
-        MetadataCleared {
+        AttributesCleared {
             collection: T::CollectionId,
             item: T::ItemId,
             who: T::AccountId,
@@ -160,45 +160,39 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::set_metadata())]
-        pub fn set_metadata(
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::set_attributes())]
+        pub fn set_attributes(
             origin: OriginFor<T>,
             collection: T::CollectionId,
             item: T::ItemId,
             attributes: BoundedVec<(BoundedVec<u8, <T as pallet::Config>::KeyLimit>, BoundedVec<u8, <T as pallet::Config>::ValueLimit>), T::AttributeLimit>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
-
-            // Verificar que el NFT existe y pertenece al llamador
             ensure!(
                 uniques::Pallet::<T>::owner(collection.clone(), item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
-            // Establecer metadatos
-            Metadata::<T>::insert(collection.clone(), item, attributes);
-            Self::deposit_event(Event::MetadataSet { collection, item, who });
+            Attributes::<T>::insert(collection.clone(), item, attributes);
+            Self::deposit_event(Event::AttributesSet { collection, item, who });
             Ok(())
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::clear_metadata())]
-        pub fn clear_metadata(
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::clear_attributes())]
+        pub fn clear_attributes(
             origin: OriginFor<T>,
             collection: T::CollectionId,
             item: T::ItemId,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
-
-            // Verificar que el NFT existe y pertenece al llamador
             ensure!(
                 uniques::Pallet::<T>::owner(collection.clone(), item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
-            // Limpiar metadatos
-            Metadata::<T>::remove(collection.clone(), item);
-            Self::deposit_event(Event::MetadataCleared { collection, item, who });
+            Attributes::<T>::remove(collection.clone(), item);
+            Self::deposit_event(Event::AttributesCleared { collection, item, who });
             Ok(())
         }
 	}
