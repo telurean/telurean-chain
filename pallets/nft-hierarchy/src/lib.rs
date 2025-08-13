@@ -175,7 +175,7 @@ pub mod pallet {
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
-            // Verificar que el padre existe y es una Entity
+            // Verify that the parent exists and is an Entity.
             ensure!(
                 uniques::Pallet::<T>::owner(parent_collection.clone(), parent_item).is_some(),
                 Error::<T>::TokenNotFound
@@ -185,7 +185,7 @@ pub mod pallet {
                 Error::<T>::InvalidNftType
             );
 
-            // Verificar que el hijo existe y es un Character
+            // Verify that the child exists and is a Character.
             ensure!(
                 uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
                 Error::<T>::NotOwner
@@ -195,7 +195,7 @@ pub mod pallet {
                 Error::<T>::InvalidNftType
             );
 
-            // Crear relación padre-hijo
+            // Create a parent-child relationship.
             Hierarchy::<T>::insert((parent_collection.clone(), parent_item, (child_collection.clone(), child_item)), true);
             Self::deposit_event(Event::ChildAdded {
                 parent: (parent_collection, parent_item),
@@ -216,19 +216,19 @@ pub mod pallet {
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
-            // Verificar que el hijo existe y pertenece al llamador
+            // Verify that the child exists and belongs to the caller.
             ensure!(
                 uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
-            // Verificar que la relación existe
+            // Verify that the relationship exists.
             ensure!(
                 Hierarchy::<T>::contains_key((parent_collection.clone(), parent_item, (child_collection.clone(), child_item))),
                 Error::<T>::HierarchyNotAllowed
             );
 
-            // Eliminar relación
+            // Remove the relationship.
             Hierarchy::<T>::remove((parent_collection.clone(), parent_item, (child_collection.clone(), child_item)));
             Self::deposit_event(Event::ChildRemoved {
                 parent: (parent_collection, parent_item),
