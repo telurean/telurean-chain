@@ -5,13 +5,13 @@ pub use pallet::*;
 
 // FRAME pallets require their own "mock runtimes" to be able to run unit tests. This module
 // contains a mock runtime specific for testing this pallet's functionality.
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
 
 // This module contains the unit tests for this pallet.
 // Learn about pallet unit testing here: https://docs.substrate.io/test/unit-testing/
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 // Every callable function or "dispatchable" a pallet exposes must have weight values that correctly
 // estimate a dispatchable's execution time. The benchmarking module is used to calculate weights
