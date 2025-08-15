@@ -180,6 +180,7 @@ impl pallet_nft_hierarchy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_nft_hierarchy::weights::SubstrateWeight<Runtime>;
     type StringLimit = ConstU32<128>;
+    type MaxRelationshipsPerQuery = ConstU32<10>;
 }
 
 impl pallet_nft_attributes::Config for Runtime {

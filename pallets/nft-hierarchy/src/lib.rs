@@ -40,6 +40,9 @@ pub mod pallet {
 
         /// Limit for strings provided from outside.
         type StringLimit: Get<u32>;
+
+        /// Define the batch of NFTs retrieved per transaction.
+        type MaxRelationshipsPerQuery: Get<u32>;
 	}
 
 	/// Map where each identified NFT corresponds to its type.
@@ -53,32 +56,39 @@ pub mod pallet {
         ValueQuery
     >;
 
-    /// Map a parent NFT (collection and ID) to its children (collection and ID). Use a boolean to 
-    /// indicate the existence of the relationship.
+    /// TODO.
     #[pallet::storage]
-    pub type Hierarchy<T: Config> = StorageNMap<
+    pub type OwnerAssets<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, T::CollectionId>,
 			Key<Twox64Concat, T::ItemId>,
-			Key<Twox64Concat, (T::CollectionId, T::ItemId)>,
+			Key<Twox64Concat, u64>, // Index.
 		),
-        // The types of entities will be defined by a string provided from outside.
-		Value = BoundedVec<u8, <T as pallet::Config>::StringLimit>, 
+		Value = Option<(T::CollectionId, T::ItemId)>,
 		QueryKind = ValueQuery,
+    >;
+
+    /// Counter of assets for each owner, which will serve as a paginator.
+    #[pallet::storage]
+    pub type AssetCount<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        (T::CollectionId, T::ItemId),
+        u64,
+        ValueQuery,
     >;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        RelationshipAdded {
-            parent: (T::CollectionId, T::ItemId),
-            child: (T::CollectionId, T::ItemId),
-            relationship: BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+        OwnershipAdded {
+            owner: (T::CollectionId, T::ItemId),
+            asset: (T::CollectionId, T::ItemId),
             who: T::AccountId,
         },
-        RelationshipRemoved {
-            parent: (T::CollectionId, T::ItemId),
-            child: (T::CollectionId, T::ItemId),
+        OwnershipRemoved {
+            owner: (T::CollectionId, T::ItemId),
+            asset: (T::CollectionId, T::ItemId),
             who: T::AccountId,
         },
     }
@@ -87,46 +97,40 @@ pub mod pallet {
     pub enum Error<T> {
         TokenNotFound,
         NotOwner,
-        InvalidRelationship,
-        StringTooLong,
+        OwnershipNotFound,
     }
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::create_child())]
-        pub fn create_relationship(
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::create_ownership())]
+        pub fn create_ownership(
             origin: OriginFor<T>,
-            parent_collection: T::CollectionId,
-            parent_item: T::ItemId,
-            child_collection: T::CollectionId,
-            child_item: T::ItemId,
-            relationship: BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+            owner_collection: T::CollectionId,
+            owner_item: T::ItemId,
+            asset_collection: T::CollectionId,
+            asset_item: T::ItemId,
         ) -> DispatchResult {
 
             let who = ensure_signed(origin)?;
-
-            // Verify that the parent exists.
             ensure!(
-                uniques::Pallet::<T>::owner(parent_collection.clone(), parent_item).is_some(),
+                uniques::Pallet::<T>::owner(owner_collection.clone(), owner_item).is_some(),
                 Error::<T>::TokenNotFound
             );
 
-            // Verify that the child exists and belongs to the caller.
+            // Verify that the asset exists and belongs to the caller.
             ensure!(
-                uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(asset_collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
-            // Verify that the relationship is not empty.
-            ensure!(!relationship.is_empty(), Error::<T>::InvalidRelationship);
+            let index = AssetCount::<T>::get((owner_collection.clone(), owner_item));
+            OwnerAssets::<T>::insert((owner_collection.clone(), owner_item, index), None::<(T::CollectionId, T::ItemId)>);
+            AssetCount::<T>::mutate((owner_collection.clone(), owner_item), |count| *count += 1);
 
-            // Create relationship.
-            Hierarchy::<T>::insert((parent_collection.clone(), parent_item, (child_collection.clone(), child_item)), relationship.clone());
-            Self::deposit_event(Event::RelationshipAdded {
-                parent: (parent_collection, parent_item),
-                child: (child_collection, child_item),
-                relationship,
+            Self::deposit_event(Event::OwnershipAdded {
+                owner: (owner_collection, owner_item),
+                asset: (asset_collection, asset_item),
                 who,
             });
 
@@ -134,38 +138,48 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_child())]
-        pub fn remove_relationship(
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_ownership())]
+        pub fn remove_ownership(
             origin: OriginFor<T>,
-            parent_collection: T::CollectionId,
-            parent_item: T::ItemId,
-            child_collection: T::CollectionId,
-            child_item: T::ItemId,
+            owner_collection: T::CollectionId,
+            owner_item: T::ItemId,
+            asset_collection: T::CollectionId,
+            asset_item: T::ItemId,
         ) -> DispatchResult {
 
             let who = ensure_signed(origin)?;
-
-            // Verify that the child exists and belongs to the caller.
             ensure!(
-                uniques::Pallet::<T>::owner(child_collection.clone(), child_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(asset_collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
-            // Verify that the relationship exists.
-            ensure!(
-                Hierarchy::<T>::contains_key((parent_collection.clone(), parent_item, (child_collection.clone(), child_item))),
-                Error::<T>::InvalidRelationship
-            );
+            // Search for the ownership relationship.
+            let count = AssetCount::<T>::get((owner_collection.clone(), owner_item.clone()));
+            let mut found_index = None;
+            for index in 0..count {
+                if OwnerAssets::<T>::get((owner_collection.clone(), owner_item.clone(), index)).is_some() {
+                    found_index = Some(index);
+                    break;
+                }
+            }
+            let index = found_index.ok_or(Error::<T>::OwnershipNotFound)?;
 
-            // Remove the relationship.
-            Hierarchy::<T>::remove((parent_collection.clone(), parent_item, (child_collection.clone(), child_item)));
-            Self::deposit_event(Event::RelationshipRemoved {
-                parent: (parent_collection, parent_item),
-                child: (child_collection, child_item),
+            // Move the last relationship to the deleted index.
+            let last_index = count - 1;
+            if index < last_index {
+                let last_child = OwnerAssets::<T>::take((owner_collection.clone(), owner_item, last_index));
+                OwnerAssets::<T>::insert((owner_collection.clone(), owner_item, index), last_child);
+            }
+            AssetCount::<T>::mutate((owner_collection.clone(), owner_item), |count| *count -= 1);
+            OwnerAssets::<T>::remove((owner_collection.clone(), owner_item, last_index));
+
+            Self::deposit_event(Event::OwnershipRemoved {
+                owner: (owner_collection, owner_item),
+                asset: (asset_collection, asset_item),
                 who,
             });
 
             Ok(())
         }
-	}
+    }
 }

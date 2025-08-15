@@ -39,7 +39,7 @@ fn create_relationship_works() {
         assert_eq!(NftTypes::<Test>::get((collection_id, child_id)), human_type);
 
         // Verify relationship creation.
-        assert_ok!(Pallet::<Test>::create_relationship(
+        assert_ok!(Pallet::<Test>::create_ownership(
             RuntimeOrigin::signed(owner),
             collection_id,
             parent_id,
@@ -48,7 +48,7 @@ fn create_relationship_works() {
             relationship.clone()
         ));
         assert_eq!(
-            Hierarchy::<Test>::get((collection_id, parent_id, (collection_id, child_id))),
+            OwnerAssets::<Test>::get((collection_id, parent_id, (collection_id, child_id))),
             relationship
         );
 
