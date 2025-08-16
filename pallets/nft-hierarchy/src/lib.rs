@@ -56,13 +56,19 @@ pub mod pallet {
         ValueQuery
     >;
 
-    /// TODO.
+    /// The following list of storage elements represents the relationships between
+    /// different types of entities in Telurean Chain. In addition to specific relationships,
+    /// there are two properties for user-defined relationships: one paginated to 
+    /// storage an indeterminate number of relationships and another limited.
+    /// The purpose of storage segmentation is to minimize the gas impact of searches.
+
+    /// Ownership relationship. This relationship is paginated by an asset counter for each owner.
     #[pallet::storage]
     pub type OwnerAssets<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, T::CollectionId>,
 			Key<Twox64Concat, T::ItemId>,
-			Key<Twox64Concat, u64>, // Index.
+			Key<Twox64Concat, u64>, // Asset counter that acts as an index in pagination.
 		),
 		Value = Option<(T::CollectionId, T::ItemId)>,
 		QueryKind = ValueQuery,
