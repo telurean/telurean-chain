@@ -40,13 +40,13 @@ fn create_ownership_works() {
         assert_eq!(AssetCount::<Test>::get((collection, owner_item)), count + 1);
         assert_eq!(
             OwnerAssets::<Test>::get((collection, owner_item, count)),
-            Some((collection, asset_item))
+            Some(asset_item)
         );
 
         // Verify event.
         System::assert_last_event(Event::<Test>::OwnershipAdded {
             owner: (collection, owner_item),
-            asset: (collection, asset_item),
+            asset: asset_item,
             who: owner,
         }.into());
     });

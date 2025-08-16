@@ -70,7 +70,7 @@ pub mod pallet {
 			Key<Twox64Concat, T::ItemId>,
 			Key<Twox64Concat, u64>, // Asset counter that acts as an index in pagination.
 		),
-		Value = Option<(T::CollectionId, T::ItemId)>,
+		Value = Option<T::ItemId>,
 		QueryKind = ValueQuery,
     >;
 
@@ -89,12 +89,12 @@ pub mod pallet {
     pub enum Event<T: Config> {
         OwnershipAdded {
             owner: (T::CollectionId, T::ItemId),
-            asset: (T::CollectionId, T::ItemId),
+            asset: T::ItemId,
             who: T::AccountId,
         },
         OwnershipRemoved {
             owner: (T::CollectionId, T::ItemId),
-            asset: (T::CollectionId, T::ItemId),
+            asset: T::ItemId,
             who: T::AccountId,
         },
     }
@@ -130,12 +130,12 @@ pub mod pallet {
 
             // Add new ownership relationship.
             let index = AssetCount::<T>::get((collection.clone(), owner_item));
-            OwnerAssets::<T>::insert((collection.clone(), owner_item, index), Some((collection.clone(), asset_item)));
+            OwnerAssets::<T>::insert((collection.clone(), owner_item, index), Some(asset_item));
             AssetCount::<T>::mutate((collection.clone(), owner_item), |count| *count += 1);
 
             Self::deposit_event(Event::OwnershipAdded {
                 owner: (collection.clone(), owner_item),
-                asset: (collection.clone(), asset_item),
+                asset: asset_item,
                 who,
             });
 
@@ -184,7 +184,7 @@ pub mod pallet {
 
             Self::deposit_event(Event::OwnershipRemoved {
                 owner: (collection.clone(), owner_item),
-                asset: (collection.clone(), asset_item),
+                asset: asset_item,
                 who,
             });
 
