@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use super::super::*;
 use crate::mock::{new_test_ext, RuntimeOrigin, System, Test, Uniques};
 use frame_support::{assert_noop, assert_ok, BoundedVec};

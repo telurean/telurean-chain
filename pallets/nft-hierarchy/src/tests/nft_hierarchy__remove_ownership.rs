@@ -1,9 +1,11 @@
+#![allow(non_snake_case)]
+
 use super::super::*;
 use crate::mock::{new_test_ext, RuntimeOrigin, System, Test, Uniques};
 use frame_support::assert_ok;
 
 #[test]
-fn adds_assets() {
+fn works() {
     new_test_ext().execute_with(|| {
         let collection = 0u32;
         let owner_item = 1u32;
@@ -37,15 +39,22 @@ fn adds_assets() {
             owner_item,
             asset_item
         ));
-        assert_eq!(AssetCount::<Test>::get((collection, owner_item)), count + 1);
         assert_eq!(
             OwnerAssets::<Test>::get((collection, owner_item, count)),
             Some(asset_item)
         );
 
+        // Verify relationship removal.
+        assert_ok!(Pallet::<Test>::remove_ownership(
+            RuntimeOrigin::signed(owner),
+            collection,
+            owner_item,
+            asset_item
+        ));
+
         // Verify event.
         System::assert_last_event(
-            Event::<Test>::OwnershipAdded {
+            Event::<Test>::OwnershipRemoved {
                 owner: (collection, owner_item),
                 asset: asset_item,
                 who: owner,
