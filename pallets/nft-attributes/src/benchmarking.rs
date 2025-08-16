@@ -7,17 +7,17 @@ use frame_system::RawOrigin;
 
 #[benchmarks]
 mod benchmarks {
-	use super::*;
+    use super::*;
 
-	#[benchmark]
-	fn set_attributes() {
+    #[benchmark]
+    fn set_attributes() {
         // TODO
-	}
+    }
 
-	#[benchmark]
-	fn clear_attributes() {
+    #[benchmark]
+    fn clear_attributes() {
         // TODO
-	}
+    }
 
-	impl_benchmark_test_suite!(Attributes, crate::mock::new_test_ext(), crate::mock::Test);
+    impl_benchmark_test_suite!(Attributes, crate::mock::new_test_ext(), crate::mock::Test);
 }

@@ -1,5 +1,8 @@
 use crate as pallet_nft_hierarchy;
-use frame_support::{derive_impl, parameter_types, traits::{VariantCountOf, ConstU32}};
+use frame_support::{
+    derive_impl, parameter_types,
+    traits::{ConstU32, VariantCountOf},
+};
 use frame_system::{EnsureRoot, EnsureSigned};
 use sp_runtime::BuildStorage;
 
@@ -7,20 +10,20 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 #[frame_support::runtime]
 mod runtime {
-	#[runtime::runtime]
-	#[runtime::derive(
-		RuntimeCall,
-		RuntimeEvent,
-		RuntimeError,
-		RuntimeOrigin,
-		RuntimeFreezeReason,
-		RuntimeHoldReason,
-		RuntimeSlashReason,
-		RuntimeLockId,
-		RuntimeTask,
-		RuntimeViewFunction
-	)]
-	pub struct Test;
+    #[runtime::runtime]
+    #[runtime::derive(
+        RuntimeCall,
+        RuntimeEvent,
+        RuntimeError,
+        RuntimeOrigin,
+        RuntimeFreezeReason,
+        RuntimeHoldReason,
+        RuntimeSlashReason,
+        RuntimeLockId,
+        RuntimeTask,
+        RuntimeViewFunction
+    )]
+    pub struct Test;
 
     #[runtime::pallet_index(0)]
     pub type System = frame_system::Pallet<Test>;
@@ -106,7 +109,7 @@ impl pallet_nft_hierarchy::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_nft_hierarchy::weights::SubstrateWeight<Test>;
     type StringLimit = StringLimit;
-    type MaxRelationshipsPerQuery = MaxRelationshipsPerQuery;
+    type MaxAssetsPerTransaction = MaxRelationshipsPerQuery;
 }
 
 // Build genesis storage according to the mock runtime.
