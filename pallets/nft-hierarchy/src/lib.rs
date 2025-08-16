@@ -118,20 +118,20 @@ pub mod pallet {
             asset_item: T::ItemId,
         ) -> DispatchResult {
 
+            // Verify that the owner and asset exist and belongs to the caller.
             let who = ensure_signed(origin)?;
             ensure!(
-                uniques::Pallet::<T>::owner(owner_collection.clone(), owner_item).is_some(),
+                uniques::Pallet::<T>::owner(owner_collection.clone(), owner_item) == Some(who.clone()),
                 Error::<T>::TokenNotFound
             );
-
-            // Verify that the asset exists and belongs to the caller.
             ensure!(
                 uniques::Pallet::<T>::owner(asset_collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
+            // Add new ownership relationship.
             let index = AssetCount::<T>::get((owner_collection.clone(), owner_item));
-            OwnerAssets::<T>::insert((owner_collection.clone(), owner_item, index), None::<(T::CollectionId, T::ItemId)>);
+            OwnerAssets::<T>::insert((owner_collection.clone(), owner_item, index), Some((asset_collection.clone(), asset_item)));
             AssetCount::<T>::mutate((owner_collection.clone(), owner_item), |count| *count += 1);
 
             Self::deposit_event(Event::OwnershipAdded {
@@ -153,17 +153,22 @@ pub mod pallet {
             asset_item: T::ItemId,
         ) -> DispatchResult {
 
+            // Verify that the owner and asset exist and belongs to the caller.
             let who = ensure_signed(origin)?;
+            ensure!(
+                uniques::Pallet::<T>::owner(owner_collection.clone(), owner_item) == Some(who.clone()),
+                Error::<T>::TokenNotFound
+            );
             ensure!(
                 uniques::Pallet::<T>::owner(asset_collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
             // Search for the ownership relationship.
-            let count = AssetCount::<T>::get((owner_collection.clone(), owner_item.clone()));
+            let count = AssetCount::<T>::get((owner_collection.clone(), owner_item));
             let mut found_index = None;
             for index in 0..count {
-                if OwnerAssets::<T>::get((owner_collection.clone(), owner_item.clone(), index)).is_some() {
+                if OwnerAssets::<T>::get((owner_collection.clone(), owner_item, index)).is_some() {
                     found_index = Some(index);
                     break;
                 }
