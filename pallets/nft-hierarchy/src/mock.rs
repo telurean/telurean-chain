@@ -98,13 +98,15 @@ impl pallet_uniques::Config for Test {
 
 // pallet_nft_hierarchy
 parameter_types! {
-    pub const NftHierarchyStringLimit: u32 = 128;
+    pub const StringLimit: u32 = 128;
+    pub const MaxRelationshipsPerQuery: u32 = 10;
 }
 
 impl pallet_nft_hierarchy::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_nft_hierarchy::weights::SubstrateWeight<Test>;
-    type StringLimit = NftHierarchyStringLimit;
+    type StringLimit = StringLimit;
+    type MaxRelationshipsPerQuery = MaxRelationshipsPerQuery;
 }
 
 // Build genesis storage according to the mock runtime.

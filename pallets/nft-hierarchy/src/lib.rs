@@ -112,31 +112,30 @@ pub mod pallet {
         #[pallet::weight(<T as pallet::Config>::WeightInfo::create_ownership())]
         pub fn create_ownership(
             origin: OriginFor<T>,
-            owner_collection: T::CollectionId,
+            collection: T::CollectionId,
             owner_item: T::ItemId,
-            asset_collection: T::CollectionId,
             asset_item: T::ItemId,
         ) -> DispatchResult {
 
             // Verify that the owner and asset exist and belongs to the caller.
             let who = ensure_signed(origin)?;
             ensure!(
-                uniques::Pallet::<T>::owner(owner_collection.clone(), owner_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(collection.clone(), owner_item) == Some(who.clone()),
                 Error::<T>::TokenNotFound
             );
             ensure!(
-                uniques::Pallet::<T>::owner(asset_collection.clone(), asset_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
             // Add new ownership relationship.
-            let index = AssetCount::<T>::get((owner_collection.clone(), owner_item));
-            OwnerAssets::<T>::insert((owner_collection.clone(), owner_item, index), Some((asset_collection.clone(), asset_item)));
-            AssetCount::<T>::mutate((owner_collection.clone(), owner_item), |count| *count += 1);
+            let index = AssetCount::<T>::get((collection.clone(), owner_item));
+            OwnerAssets::<T>::insert((collection.clone(), owner_item, index), Some((collection.clone(), asset_item)));
+            AssetCount::<T>::mutate((collection.clone(), owner_item), |count| *count += 1);
 
             Self::deposit_event(Event::OwnershipAdded {
-                owner: (owner_collection, owner_item),
-                asset: (asset_collection, asset_item),
+                owner: (collection.clone(), owner_item),
+                asset: (collection.clone(), asset_item),
                 who,
             });
 
@@ -147,28 +146,27 @@ pub mod pallet {
         #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_ownership())]
         pub fn remove_ownership(
             origin: OriginFor<T>,
-            owner_collection: T::CollectionId,
+            collection: T::CollectionId,
             owner_item: T::ItemId,
-            asset_collection: T::CollectionId,
             asset_item: T::ItemId,
         ) -> DispatchResult {
 
             // Verify that the owner and asset exist and belongs to the caller.
             let who = ensure_signed(origin)?;
             ensure!(
-                uniques::Pallet::<T>::owner(owner_collection.clone(), owner_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(collection.clone(), owner_item) == Some(who.clone()),
                 Error::<T>::TokenNotFound
             );
             ensure!(
-                uniques::Pallet::<T>::owner(asset_collection.clone(), asset_item) == Some(who.clone()),
+                uniques::Pallet::<T>::owner(collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
 
             // Search for the ownership relationship.
-            let count = AssetCount::<T>::get((owner_collection.clone(), owner_item));
+            let count = AssetCount::<T>::get((collection.clone(), owner_item));
             let mut found_index = None;
             for index in 0..count {
-                if OwnerAssets::<T>::get((owner_collection.clone(), owner_item, index)).is_some() {
+                if OwnerAssets::<T>::get((collection.clone(), owner_item, index)).is_some() {
                     found_index = Some(index);
                     break;
                 }
@@ -178,15 +176,15 @@ pub mod pallet {
             // Move the last relationship to the deleted index.
             let last_index = count - 1;
             if index < last_index {
-                let last_child = OwnerAssets::<T>::take((owner_collection.clone(), owner_item, last_index));
-                OwnerAssets::<T>::insert((owner_collection.clone(), owner_item, index), last_child);
+                let last_child = OwnerAssets::<T>::take((collection.clone(), owner_item, last_index));
+                OwnerAssets::<T>::insert((collection.clone(), owner_item, index), last_child);
             }
-            AssetCount::<T>::mutate((owner_collection.clone(), owner_item), |count| *count -= 1);
-            OwnerAssets::<T>::remove((owner_collection.clone(), owner_item, last_index));
+            AssetCount::<T>::mutate((collection.clone(), owner_item), |count| *count -= 1);
+            OwnerAssets::<T>::remove((collection.clone(), owner_item, last_index));
 
             Self::deposit_event(Event::OwnershipRemoved {
-                owner: (owner_collection, owner_item),
-                asset: (asset_collection, asset_item),
+                owner: (collection.clone(), owner_item),
+                asset: (collection.clone(), asset_item),
                 who,
             });
 
