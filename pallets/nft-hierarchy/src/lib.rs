@@ -63,6 +63,7 @@ pub mod pallet {
     /// The purpose of storage segmentation is to minimize the gas impact of searches.
 
     /// Ownership relationship. This relationship is paginated by an asset counter for each owner.
+    /// Only the ItemId is stored since the CollectionId matches that of the owner.
     #[pallet::storage]
     pub type OwnerAssets<T: Config> = StorageNMap<
 		Key = (
@@ -97,6 +98,10 @@ pub mod pallet {
             asset: T::ItemId,
             who: T::AccountId,
         },
+        AssetsRetrieved {
+            owner: (T::CollectionId, T::ItemId),
+            assets: BoundedVec<T::ItemId, T::MaxRelationshipsPerQuery>,
+        },
     }
 
 	#[pallet::error]
@@ -104,6 +109,7 @@ pub mod pallet {
         TokenNotFound,
         NotOwner,
         OwnershipNotFound,
+        ExceededMaxRelationships,
     }
 
 	#[pallet::call]
@@ -186,6 +192,43 @@ pub mod pallet {
                 owner: (collection.clone(), owner_item),
                 asset: asset_item,
                 who,
+            });
+
+            Ok(())
+        }
+    
+        #[pallet::call_index(2)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::get_owned_assets())]
+        pub fn get_owned_assets(
+            origin: OriginFor<T>,
+            collection: T::CollectionId,
+            owner_item: T::ItemId,
+            start: u64,
+            limit: u32,
+        ) -> DispatchResult {
+            
+            let _ = ensure_signed(origin)?;
+
+            // Ensure that the limit does not exceed MaxRelationshipsPerQuery to avoid excessive reads.
+            let count = AssetCount::<T>::get((collection.clone(), owner_item));
+            let max_items = T::MaxRelationshipsPerQuery::get() as u64;
+            let end = start
+                .saturating_add(limit as u64)
+                .min(count)
+                .min(start + max_items);
+            let mut owned_nfts = BoundedVec::new();
+            for index in start..end {
+                if let Some(asset) = OwnerAssets::<T>::get((collection.clone(), owner_item, index)) {
+                    owned_nfts
+                        .try_push(asset)
+                        .map_err(|_| Error::<T>::ExceededMaxRelationships)?;
+                }
+            }
+
+            // Emit an event with the retrieved assets.
+            Self::deposit_event(Event::AssetsRetrieved {
+                owner: (collection, owner_item),
+                assets: owned_nfts,
             });
 
             Ok(())
