@@ -114,7 +114,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::create_ownership())]
-        pub fn create_ownership(
+        pub fn set_ownership(
             origin: OriginFor<T>,
             collection: T::CollectionId,
             owner_item: T::ItemId,
