@@ -3,6 +3,9 @@
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
+// Common functionality.
+mod common;
+
 #[cfg(test)]
 mod mock;
 
@@ -41,21 +44,22 @@ pub mod pallet {
         /// Limit for strings provided from outside.
         type StringLimit: Get<u32>;
 
-        /// Limit on the number of elements in item groups.
-        type ItemLimit: Get<u32>;
+        /// Limit on the number of assignable types that define a hierarchy.
+        type TypeLimit: Get<u32>;
 
         /// Define the batch of NFTs retrieved per transaction.
         type MaxAssetsPerTransaction: Get<u32>;
     }
 
-    /// Map where each identified NFT corresponds to its type.
+    /// Map where each identified NFT corresponds to a list of types expressed as strings, 
+    /// which function as assignable tags to an entity. Each assigned type brings new attributes 
+    /// and relationships to that entity.
     #[pallet::storage]
     pub type NftTypes<T: Config> = StorageMap<
         _,
         Blake2_128Concat,
         (T::CollectionId, T::ItemId),
-        // The types of entities will be defined by a string provided from outside.
-        BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+        BoundedVec<BoundedVec<u8, <T as pallet::Config>::StringLimit>, <T as pallet::Config>::TypeLimit>,
         ValueQuery,
     >;
 
@@ -108,6 +112,7 @@ pub mod pallet {
         NotOwner,
         OwnershipNotFound,
         ExceededMaxAssetsPerQuery,
+        WrongNftType,
     }
 
     #[pallet::call]
@@ -120,7 +125,8 @@ pub mod pallet {
             owner_item: T::ItemId,
             asset_item: T::ItemId,
         ) -> DispatchResult {
-            // Verify that the owner and asset exist and belongs to the caller.
+
+            // Verify that the owner and asset exist, belong to the caller.
             let who = ensure_signed(origin)?;
             ensure!(
                 uniques::Pallet::<T>::owner(collection.clone(), owner_item) == Some(who.clone()),
@@ -130,6 +136,11 @@ pub mod pallet {
                 uniques::Pallet::<T>::owner(collection.clone(), asset_item) == Some(who.clone()),
                 Error::<T>::NotOwner
             );
+
+            // ensure!(
+            //     common::nft_is_type::<T>(collection.clone(), asset_item, "owner"),
+            //     Error::<T>::WrongNftType
+            // );
 
             // Add new ownership relationship.
             let index = AssetCount::<T>::get((collection.clone(), owner_item));
@@ -153,6 +164,7 @@ pub mod pallet {
             owner_item: T::ItemId,
             asset_item: T::ItemId,
         ) -> DispatchResult {
+
             // Verify that the owner and asset exist and belongs to the caller.
             let who = ensure_signed(origin)?;
             ensure!(
@@ -203,6 +215,7 @@ pub mod pallet {
             start_index: u64,
             num_assets: u32,
         ) -> DispatchResult {
+
             let _ = ensure_signed(origin)?;
 
             let max_assets_per_query = T::MaxAssetsPerTransaction::get();

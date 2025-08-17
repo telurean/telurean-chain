@@ -102,7 +102,7 @@ impl pallet_uniques::Config for Test {
 // pallet_nft_hierarchy
 parameter_types! {
     pub const StringLimit: u32 = 128;
-    pub const ItemLimit: u32 = 100;
+    pub const TypeLimit: u32 = 100;
     pub const MaxRelationshipsPerQuery: u32 = 10;
 }
 
@@ -110,7 +110,7 @@ impl pallet_nft_hierarchy::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_nft_hierarchy::weights::SubstrateWeight<Test>;
     type StringLimit = StringLimit;
-    type ItemLimit = ItemLimit;
+    type TypeLimit = StringLimit;
     type MaxAssetsPerTransaction = MaxRelationshipsPerQuery;
 }
 
