@@ -1,3 +1,3 @@
-pub mod nft_hierarchy__create_ownership;
+pub mod nft_hierarchy__set_ownership;
 pub mod nft_hierarchy__remove_ownership;
 pub mod nft_hierarchy__get_owned_assets;

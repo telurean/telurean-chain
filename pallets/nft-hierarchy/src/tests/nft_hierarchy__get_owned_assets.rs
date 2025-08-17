@@ -31,7 +31,7 @@ fn works() {
                 i, // 2 3 4 5 -> 4 assets.
                 owner
             ));
-            assert_ok!(Pallet::<Test>::create_ownership(
+            assert_ok!(Pallet::<Test>::set_ownership(
                 RuntimeOrigin::signed(owner),
                 collection,
                 owner_item,
@@ -87,7 +87,7 @@ fn supports_maximum_exceeded() {
                 i, // 2 3 4 5 6 7 8 9 10 11 12 -> 11 assets.
                 owner
             ));
-            assert_ok!(Pallet::<Test>::create_ownership(
+            assert_ok!(Pallet::<Test>::set_ownership(
                 RuntimeOrigin::signed(owner),
                 collection,
                 owner_item,

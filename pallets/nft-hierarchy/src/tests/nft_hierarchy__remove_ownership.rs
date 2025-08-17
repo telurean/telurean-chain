@@ -33,7 +33,7 @@ fn works() {
 
         // Verify relationship creation.
         let count = AssetCount::<Test>::get((collection, owner_item));
-        assert_ok!(Pallet::<Test>::create_ownership(
+        assert_ok!(Pallet::<Test>::set_ownership(
             RuntimeOrigin::signed(owner),
             collection,
             owner_item,

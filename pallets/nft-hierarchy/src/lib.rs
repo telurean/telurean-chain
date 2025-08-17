@@ -41,6 +41,9 @@ pub mod pallet {
         /// Limit for strings provided from outside.
         type StringLimit: Get<u32>;
 
+        /// Limit on the number of elements in item groups.
+        type ItemLimit: Get<u32>;
+
         /// Define the batch of NFTs retrieved per transaction.
         type MaxAssetsPerTransaction: Get<u32>;
     }
