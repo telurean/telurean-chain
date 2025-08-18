@@ -22,6 +22,7 @@ pub mod pallet {
     use super::*;
     use frame_support::pallet_prelude::*;
     use frame_support::storage::Key;
+    use sp_runtime::traits::StaticLookup;
     use frame_system::pallet_prelude::*;
     use pallet_uniques::{self as uniques};
 
@@ -87,6 +88,11 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
+        NftRegistered {
+            owner: (T::CollectionId, T::ItemId),
+            asset: T::ItemId,
+            who: T::AccountId,
+        },
         OwnershipAdded {
             owner: (T::CollectionId, T::ItemId),
             asset: T::ItemId,
@@ -106,8 +112,11 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         TokenNotFound,
+        UnknownCollection,
+        AlreadyExists,
         NotOwner,
         OwnershipNotFound,
+        ExceededTypeLimit,
         ExceededMaxAssetsPerQuery,
         WrongNftType,
     }
@@ -115,6 +124,56 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::register_nft())]
+        pub fn register_nft(
+            origin: OriginFor<T>,
+            collection: T::CollectionId,
+            owner_item: T::ItemId,
+            asset_item: T::ItemId,
+            owner: T::AccountId,
+            nft_types: BoundedVec<BoundedVec<u8, T::StringLimit>, T::TypeLimit>,
+        ) -> DispatchResult {
+
+            let who = ensure_signed(origin)?;
+
+            // Verify that the collection exists and the NFT is not already created.
+            ensure!(
+                uniques::Collection::<T>::get(collection.clone()).is_some(),
+                Error::<T>::UnknownCollection
+            );
+            ensure!(
+                uniques::Item::<T>::get(collection.clone(), asset_item).is_none(),
+                Error::<T>::AlreadyExists
+            );
+
+            // Verify that the type limit is not exceeded.
+            ensure!(
+                nft_types.len() <= T::TypeLimit::get() as usize,
+                Error::<T>::ExceededTypeLimit
+            );
+
+            NftTypes::<T>::insert((collection.clone(), asset_item), nft_types);
+
+            // Mint the new NFT for the given collection and owner.
+            uniques::Pallet::<T>::mint(
+                T::RuntimeOrigin::signed(who),
+                collection.clone(),
+                asset_item,
+                <T::Lookup as StaticLookup>::unlookup(owner.clone()))?;
+
+            AssetCount::<T>::mutate((collection.clone(), owner_item), |count| *count += 1);          
+            
+            Self::deposit_event(Event::NftRegistered {
+                owner: (collection.clone(), owner_item),
+                asset: asset_item,
+                who: owner,
+            });
+
+            Ok(())
+        }
+
+        /// 
+        #[pallet::call_index(1)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::create_ownership())]
         pub fn set_ownership(
             origin: OriginFor<T>,
@@ -153,7 +212,8 @@ pub mod pallet {
             Ok(())
         }
 
-        #[pallet::call_index(1)]
+        /// 
+        #[pallet::call_index(2)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_ownership())]
         pub fn remove_ownership(
             origin: OriginFor<T>,
@@ -203,7 +263,8 @@ pub mod pallet {
             Ok(())
         }
 
-        #[pallet::call_index(2)]
+        /// 
+        #[pallet::call_index(3)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::get_owned_assets())]
         pub fn get_owned_assets(
             origin: OriginFor<T>,
