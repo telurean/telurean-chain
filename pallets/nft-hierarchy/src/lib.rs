@@ -41,9 +41,6 @@ pub mod pallet {
         /// A type representing the weights required by the dispatchables of this pallet.
         type WeightInfo: WeightInfo;
 
-        /// Limit for strings provided from outside.
-        type StringLimit: Get<u32>;
-
         /// Limit on the number of assignable types that define a hierarchy.
         type TypeLimit: Get<u32>;
 
@@ -59,7 +56,7 @@ pub mod pallet {
         _,
         Blake2_128Concat,
         (T::CollectionId, T::ItemId),
-        BoundedVec<BoundedVec<u8, <T as pallet::Config>::StringLimit>, <T as pallet::Config>::TypeLimit>,
+        BoundedVec<BoundedVec<u8, T::StringLimit>, <T as pallet::Config>::TypeLimit>,
         ValueQuery,
     >;
 
