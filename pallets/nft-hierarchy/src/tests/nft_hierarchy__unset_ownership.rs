@@ -7,57 +7,57 @@ use frame_support::assert_ok;
 #[test]
 fn works() {
     new_test_ext().execute_with(|| {
-        let collection = 0u32;
-        let owner_item = 1u32;
-        let asset_item = 2u32;
-        let owner = 1u64;
+        let collec_id = 0u32;
+        let owner_id = 1u128;
+        let asset_id = 2u128;
+        let who = 1u64;
 
         // Create collection and NFT with pallet_uniques.
         assert_ok!(Uniques::create(
-            RuntimeOrigin::signed(owner),
-            collection,
-            owner
+            RuntimeOrigin::signed(who),
+            collec_id,
+            who
         ));
         assert_ok!(Uniques::mint(
-            RuntimeOrigin::signed(owner),
-            collection,
-            owner_item,
-            owner
+            RuntimeOrigin::signed(who),
+            collec_id,
+            owner_id,
+            who
         ));
         assert_ok!(Uniques::mint(
-            RuntimeOrigin::signed(owner),
-            collection,
-            asset_item,
-            owner
+            RuntimeOrigin::signed(who),
+            collec_id,
+            asset_id,
+            who
         ));
 
         // Verify relationship creation.
-        let count = AssetCount::<Test>::get((collection, owner_item));
+        let count = AssetCount::<Test>::get((collec_id, owner_id));
         assert_ok!(Pallet::<Test>::set_ownership(
-            RuntimeOrigin::signed(owner),
-            collection,
-            owner_item,
-            asset_item
+            RuntimeOrigin::signed(who),
+            collec_id,
+            owner_id,
+            asset_id
         ));
         assert_eq!(
-            OwnerAssets::<Test>::get((collection, owner_item, count)),
-            Some(asset_item)
+            OwnerAssets::<Test>::get((collec_id, owner_id, count)),
+            Some(asset_id)
         );
 
         // Verify relationship removal.
-        assert_ok!(Pallet::<Test>::remove_ownership(
-            RuntimeOrigin::signed(owner),
-            collection,
-            owner_item,
-            asset_item
+        assert_ok!(Pallet::<Test>::unset_ownership(
+            RuntimeOrigin::signed(who),
+            collec_id,
+            owner_id,
+            asset_id
         ));
 
         // Verify event.
         System::assert_last_event(
             Event::<Test>::OwnershipRemoved {
-                owner: (collection, owner_item),
-                asset: asset_item,
-                who: owner,
+                owner: (collec_id, owner_id),
+                asset: asset_id,
+                who,
             }
             .into(),
         );

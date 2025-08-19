@@ -283,32 +283,37 @@ pub mod pallet {
             Ok(())
         }
 
-        /// 
+        /// Retrieve all NFTs that belong to another NFT through an ownership relationship. You must
+        /// specify the number of assets to return, as there is a limit of 10 per query, and the index
+        /// of the first asset, where this index refers to the order number of the owned asset. For 
+        /// example: if El Cid owns his sword Tizona (1), his armor (2), his horse Babieca (3), and 
+        /// 20 properties on the Valencia coast (4..23), and you want to retrieve the last 5 properties,
+        /// start = 19 and num_assets = 5.
         #[pallet::call_index(3)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::get_owned_assets())]
         pub fn get_owned_assets(
             origin: OriginFor<T>,
             collec_id: T::CollectionId,
             owner_id: T::ItemId,
-            start_id: u128,
-            num_assets: u128,
+            start: u128,
+            num_assets: u32,
         ) -> DispatchResult {
 
             let _ = ensure_signed(origin)?;
 
             let max_assets_per_query = T::MaxAssetsPerTransaction::get();
             ensure!(
-                num_assets <= max_assets_per_query as u128,
+                num_assets <= max_assets_per_query,
                 Error::<T>::ExceededMaxAssetsPerQuery
             );
 
             // Ensure that the limit does not exceed MaxAssetsPerTransaction to avoid excessive reads.
             let num_assets_owned = AssetCount::<T>::get((collec_id, owner_id));
-            let end_index = start_id
-                .saturating_add(num_assets)
+            let end = start
+                .saturating_add(num_assets as u128)
                 .min(num_assets_owned);
             let mut owned_nfts = BoundedVec::new();
-            for i in start_id..end_index {
+            for i in start..end {
                 if let Some(asset) = OwnerAssets::<T>::get((collec_id, owner_id, i)) {
                     owned_nfts
                         .try_push(asset)
