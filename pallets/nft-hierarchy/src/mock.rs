@@ -83,7 +83,7 @@ parameter_types! {
 impl pallet_uniques::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type CollectionId = u32;
-    type ItemId = u32;
+    type ItemId = u64;
     type Currency = Balances;
     type ForceOrigin = EnsureRoot<Self::AccountId>;
     type CreateOrigin = EnsureSigned<Self::AccountId>;

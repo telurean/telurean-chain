@@ -163,7 +163,7 @@ impl pallet_sudo::Config for Runtime {
 impl pallet_uniques::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type CollectionId = u32;
-    type ItemId = u32;
+    type ItemId = u128;
     type Currency = Balances; // Para pagos relacionados con creación/emisión
     type ForceOrigin = EnsureRoot<AccountId>; // Para acciones privilegiadas
     type CreateOrigin = EnsureSigned<AccountId>; // Quién puede crear colecciones
