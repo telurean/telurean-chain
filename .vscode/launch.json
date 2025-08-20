@@ -1,0 +1,114 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'telurean-chain-node' NATIVE",
+            "program": "${workspaceFolder}/target/debug/telurean-chain-node",
+            "args": ["--dev", "--tmp", "--execution=Native"],
+            "cwd": "${workspaceFolder}",
+            "sourceMap": {
+                "/rustc/*": "${env:HOME}/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust",
+                "${workspaceFolder}": "${workspaceFolder}"
+            },
+        },        
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'telurean-chain-node'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=telurean-chain-node",
+                    "--package=telurean-chain-node"
+                ],
+                "filter": {
+                    "name": "telurean-chain-node",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'telurean-chain-node'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=telurean-chain-node",
+                    "--package=telurean-chain-node"
+                ],
+                "filter": {
+                    "name": "telurean-chain-node",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'telurean_chain_runtime'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=telurean-chain-runtime"
+                ],
+                "filter": {
+                    "name": "telurean_chain_runtime",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'pallet_nft_attributes'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=pallet-nft-attributes"
+                ],
+                "filter": {
+                    "name": "pallet_nft_attributes",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'pallet_nft_hierarchy'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=pallet-nft-hierarchy"
+                ],
+                "filter": {
+                    "name": "pallet_nft_hierarchy",
+                    "kind": "lib"
+                }
+            },
+            "args": ["--dev"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

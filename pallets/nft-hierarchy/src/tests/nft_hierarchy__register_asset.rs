@@ -23,6 +23,7 @@ fn works() {
             tags.clone()
         ));
 
+        // Verify the NFT has been registered.
         let info = NftInfos::<Test>::get(asset_id);
         assert_eq!(info.collec_id, Some(collec_id));
         assert_eq!(info.owner_id, None);
