@@ -23,7 +23,6 @@ pub mod pallet {
     use common::NftInfo;
     use frame_support::pallet_prelude::*;
     use frame_support::storage::Key;
-    use sp_runtime::traits::StaticLookup;
     use frame_system::pallet_prelude::*;
     use pallet_uniques::{self as uniques};
 
@@ -61,15 +60,10 @@ pub mod pallet {
     pub type NftInfos<T: Config> = StorageMap<
         _,
         Blake2_128Concat,
-        u128,
+        T::ItemId,
         NftInfo<T>,
         ValueQuery,
     >;
-
-    // NFT identifiers are global to the blockchain and do not depend on the collection. They are incremental,
-    // starting with 1 (not 0), and the next NFT in the list is always the current ID + 1.
-    #[pallet::storage]
-    pub type LastNftId<T: Config> = StorageValue<_, u128, ValueQuery>;
 
     /// Ownership relationship. This relationship is paginated by an asset counter for each owner.
     /// Only the ItemId is stored since the CollectionId matches that of the owner.
@@ -135,32 +129,19 @@ pub mod pallet {
         T::CollectionId: From<u32> + Into<u32> + Copy,
         T::ItemId: From<u128> + Into<u128>,
     {
-        /// Register a new asset in the system, understanding an asset as an NFT that is not
-        /// a collection. The specified collection must have been previously registered in the 
-        /// Uniques pallet, or register_asset will produce an error.
+        /// Register a new asset in the pallet, understanding an asset as an NFT that is not
+        /// a collection. Both the specified collection and the asset must have been previously 
+        /// created in the corresponding pallet, register_asset does not check this condition.
         #[pallet::call_index(0)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::register_nft())]
         pub fn register_asset(
             origin: OriginFor<T>,
             collec_id: T::CollectionId,
+            asset_id: T::ItemId,
             tags: BoundedVec<BoundedVec<u8, T::StringLimit>, T::TypeLimit>,
         ) -> DispatchResult {
 
             let who = ensure_signed(origin)?;
-
-            // Verify that the collection exists and the NFT is not already created.
-            ensure!(
-                uniques::Collection::<T>::get(collec_id).is_some(),
-                Error::<T>::UnknownCollection
-            );
-
-            let mut nft_id = LastNftId::<T>::get();
-            if nft_id == 0 { nft_id = 1 } else { nft_id += 1 }
-            let item_id: T::ItemId = nft_id.into();
-            ensure!(
-                uniques::Item::<T>::get(collec_id, item_id).is_none(),
-                Error::<T>::AlreadyExists
-            );
 
             // Verify that the type limit is not exceeded.
             ensure!(
@@ -168,25 +149,16 @@ pub mod pallet {
                 Error::<T>::ExceededTypeLimit
             );
 
-            NftInfos::<T>::insert(nft_id, NftInfo { 
+            NftInfos::<T>::insert(asset_id, NftInfo { 
                 collec_id: Some(collec_id),
-                item_id: Some(item_id),
                 owner_id: None,
                 tags: tags
             });
-            LastNftId::<T>::mutate(|id| *id = nft_id);
-
-            // Mint the new NFT for the given collection and owner.
-            uniques::Pallet::<T>::mint(
-                T::RuntimeOrigin::signed(who.clone()),
-                collec_id,
-                item_id,
-                <T::Lookup as StaticLookup>::unlookup(who.clone()))?;
             
             Self::deposit_event(Event::NftRegistered {
                 who: who,
                 collection: collec_id,
-                asset: item_id,
+                asset: asset_id,
             });
 
             Ok(())
@@ -205,17 +177,7 @@ pub mod pallet {
 
             let who = ensure_signed(origin)?;
 
-            // Verify that the owner and asset exist, belong to the caller.
-            ensure!(
-                uniques::Pallet::<T>::owner(collec_id, owner_id) == Some(who.clone()),
-                Error::<T>::TokenNotFound
-            );
-            ensure!(
-                uniques::Pallet::<T>::owner(collec_id, asset_id) == Some(who.clone()),
-                Error::<T>::NotOwner
-            );
-
-            let owner = NftInfos::<T>::get(owner_id.into());
+            let owner = NftInfos::<T>::get(owner_id);
             ensure!(
                 owner.collec_id.is_some() && owner.is_type("owner"),
                 Error::<T>::WrongNft
@@ -250,16 +212,6 @@ pub mod pallet {
         ) -> DispatchResult {
 
             let who = ensure_signed(origin)?;
-
-            // Verify that the owner and asset exist and belongs to the caller.
-            ensure!(
-                uniques::Pallet::<T>::owner(collec_id, owner_id) == Some(who.clone()),
-                Error::<T>::TokenNotFound
-            );
-            ensure!(
-                uniques::Pallet::<T>::owner(collec_id, asset_id) == Some(who.clone()),
-                Error::<T>::NotOwner
-            );
 
             // Search for the ownership relationship.
             let count = AssetCount::<T>::get((collec_id, owner_id));

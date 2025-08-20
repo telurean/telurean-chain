@@ -5,11 +5,10 @@ use sp_runtime::{ BoundedVec, traits::Get };
 use frame_support::pallet_prelude::{ Encode, Decode, MaxEncodedLen };
 
 /// This structure represents the information corresponding to a single NFT: the collection it belongs to, 
-/// its owner if it has one, and the tags that define its type.
+/// its relationships (for the MVP only its owner  if it has one), and the tags that define its type.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 pub struct NftInfo<T: Config> {
     pub collec_id: Option<T::CollectionId>,
-    pub item_id: Option<T::ItemId>,
     pub owner_id: Option<T::ItemId>,
     pub tags: BoundedVec<BoundedVec<u8, T::StringLimit>, T::TypeLimit>,
 }
@@ -38,7 +37,6 @@ impl<T: Config> Default for NftInfo<T> {
     fn default() -> Self {
         NftInfo {
             collec_id: None,
-            item_id: None,
             owner_id: None,
             tags: BoundedVec::default(),
         }
