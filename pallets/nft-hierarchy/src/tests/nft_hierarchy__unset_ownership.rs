@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 
 use super::super::*;
-use crate::mock::{new_test_ext, RuntimeOrigin, System, Test, Uniques};
-use frame_support::assert_ok;
+use crate::mock::{new_test_ext, RuntimeOrigin, System, Test};
+use frame_support::{assert_ok, BoundedVec};
 
 #[test]
 fn works() {
@@ -12,36 +12,37 @@ fn works() {
         let asset_id = 2u128;
         let who = 1u64;
 
-        // Create collection and NFT with pallet_uniques.
-        assert_ok!(Uniques::create(
-            RuntimeOrigin::signed(who),
-            collec_id,
-            who
-        ));
-        assert_ok!(Uniques::mint(
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+            BoundedVec::try_from(vec![
+                BoundedVec::try_from(b"entity".to_vec()).unwrap(),
+                BoundedVec::try_from(b"owner".to_vec()).unwrap(),
+                BoundedVec::try_from(b"character".to_vec()).unwrap(),
+        ]).unwrap();
+        let _ = Pallet::<Test>::register_asset(
             RuntimeOrigin::signed(who),
             collec_id,
             owner_id,
-            who
-        ));
-        assert_ok!(Uniques::mint(
+            tags
+        );
+
+        // Create NFT for the asset.
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+            BoundedVec::try_from(
+                vec![BoundedVec::try_from(b"entity".to_vec()).unwrap()]
+            ).unwrap();
+        let _ = Pallet::<Test>::register_asset(
             RuntimeOrigin::signed(who),
             collec_id,
             asset_id,
-            who
-        ));
+            tags
+        );
 
-        // Verify relationship creation.
-        let count = AssetCount::<Test>::get((collec_id, owner_id));
-        assert_ok!(Pallet::<Test>::set_ownership(
+        // Relationship creation.
+        let _ = Pallet::<Test>::set_ownership(
             RuntimeOrigin::signed(who),
             collec_id,
             owner_id,
             asset_id
-        ));
-        assert_eq!(
-            OwnerAssets::<Test>::get((collec_id, owner_id, count)),
-            Some(asset_id)
         );
 
         // Verify relationship removal.

@@ -8,8 +8,8 @@ use frame_support::{assert_ok, BoundedVec};
 fn works() {
     new_test_ext().execute_with(|| {
         let collec_id = 1u32;
-        let owner_id = 1u128; // The owner is created first and should have the ID 1.
-        let asset_id = 2u128; // The asset is created second and should have the ID 2.
+        let owner_id = 1u128;
+        let asset_id = 2u128;
         let who = 1u64;
 
         // Create NFT for the owner.
