@@ -135,11 +135,12 @@ pub mod pallet {
         T::CollectionId: From<u32> + Into<u32> + Copy,
         T::ItemId: From<u128> + Into<u128>,
     {
-        /// Register a new NFT in the system, assigning it an incremental identifier. 
-        /// The NFT lacks relationships after creation, for example, it has no owner NFT.
+        /// Register a new asset in the system, understanding an asset as an NFT that is not
+        /// a collection. The specified collection must have been previously registered in the 
+        /// Uniques pallet, or register_asset will produce an error.
         #[pallet::call_index(0)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::register_nft())]
-        pub fn register_nft(
+        pub fn register_asset(
             origin: OriginFor<T>,
             collec_id: T::CollectionId,
             tags: BoundedVec<BoundedVec<u8, T::StringLimit>, T::TypeLimit>,
@@ -153,7 +154,8 @@ pub mod pallet {
                 Error::<T>::UnknownCollection
             );
 
-            let nft_id = LastNftId::<T>::get() + 1;
+            let mut nft_id = LastNftId::<T>::get();
+            if nft_id == 0 { nft_id = 1 } else { nft_id += 1 }
             let item_id: T::ItemId = nft_id.into();
             ensure!(
                 uniques::Item::<T>::get(collec_id, item_id).is_none(),
@@ -167,11 +169,12 @@ pub mod pallet {
             );
 
             NftInfos::<T>::insert(nft_id, NftInfo { 
-                collection: Some(collec_id),
+                collec_id: Some(collec_id),
                 item_id: Some(item_id),
                 owner_id: None,
                 tags: tags
             });
+            LastNftId::<T>::mutate(|id| *id = nft_id);
 
             // Mint the new NFT for the given collection and owner.
             uniques::Pallet::<T>::mint(
@@ -214,12 +217,15 @@ pub mod pallet {
 
             let owner = NftInfos::<T>::get(owner_id.into());
             ensure!(
-                owner.collection.is_some() && owner.is_type("owner"),
+                owner.collec_id.is_some() && owner.is_type("owner"),
                 Error::<T>::WrongNft
             );
 
             // Add new ownership relationship.
             let index = AssetCount::<T>::get((collec_id, owner_id));
+            if index == 0 {
+                AssetCount::<T>::insert((collec_id, owner_id), 0);
+            }
             OwnerAssets::<T>::insert((collec_id, owner_id, index), Some(asset_id));
             AssetCount::<T>::mutate((collec_id, owner_id), |count| *count += 1);
 
