@@ -182,6 +182,9 @@ impl pallet_uniques::Config for Runtime {
 impl pallet_nft_hierarchy::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_nft_hierarchy::weights::SubstrateWeight<Runtime>;
+    type CollectionId = u32;
+    type ItemId = u128;
+    type StringLimit = ConstU32<128>;
     type TypeLimit = ConstU32<100>;
     type MaxAssetsPerTransaction = ConstU32<10>;
 }

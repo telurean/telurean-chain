@@ -24,7 +24,6 @@ pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_support::storage::Key;
     use frame_system::pallet_prelude::*;
-    use pallet_uniques::{self as uniques};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -35,12 +34,21 @@ pub mod pallet {
     /// These types are defined generically and made concrete when the pallet is declared in the
     /// `runtime/src/lib.rs` file of your chain.
     #[pallet::config]
-    pub trait Config: frame_system::Config + uniques::Config + TypeInfo {
+    pub trait Config: frame_system::Config + TypeInfo {
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// A type representing the weights required by the dispatchables of this pallet.
         type WeightInfo: WeightInfo;
+
+		/// Identifier for the collection of item.
+		type CollectionId: Member + Parameter + MaxEncodedLen + Copy + From<u32> + Into<u32>;
+
+		/// The type used to identify a unique item within a collection.
+		type ItemId: Member + Parameter + MaxEncodedLen + Copy + From<u128> + Into<u128>;
+
+        /// Limit on the string length for store elements.
+        type StringLimit: Get<u32>;
 
         /// Limit on the number of assignable tags, which make up the type, that define an NFT.
         type TypeLimit: Get<u32>;
@@ -124,10 +132,7 @@ pub mod pallet {
     }
 
     #[pallet::call]
-    impl<T: Config> Pallet<T> 
-    where
-        T::CollectionId: From<u32> + Into<u32> + Copy,
-        T::ItemId: From<u128> + Into<u128>,
+    impl<T: Config> Pallet<T>
     {
         /// Register a new asset in the pallet, understanding an asset as an NFT that is not
         /// a collection. Both the specified collection and the asset must have been previously 
