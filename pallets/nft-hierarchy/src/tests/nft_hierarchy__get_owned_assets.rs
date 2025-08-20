@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use super::super::*;
-use crate::mock::{new_test_ext, RuntimeOrigin, System, Test, Uniques};
+use crate::mock::{new_test_ext, RuntimeOrigin, System, Test};
 use frame_support::{assert_noop, assert_ok, BoundedVec};
 
 #[test]
@@ -11,33 +11,40 @@ fn works() {
         let owner_id = 1u128;
         let who = 1u64;
 
-        // Create collection and NFTs with pallet_uniques.
-        assert_ok!(Uniques::create(
+        // Create NFTs for the owner.
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+            BoundedVec::try_from(vec![
+                BoundedVec::try_from(b"entity".to_vec()).unwrap(),
+                BoundedVec::try_from(b"owner".to_vec()).unwrap(),
+                BoundedVec::try_from(b"character".to_vec()).unwrap(),
+        ]).unwrap();
+        let _ = Pallet::<Test>::register_asset(
             RuntimeOrigin::signed(who),
             collec_id,
-            who
-        ));
-        assert_ok!(Uniques::mint(
-            RuntimeOrigin::signed(who),
-            collec_id,
-            owner_id, // 1 -> 1 asset.
-            who
-        ));
+            owner_id,
+            tags
+        );
 
+        // Create NFTs for the asset.
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+            BoundedVec::try_from(
+                vec![BoundedVec::try_from(b"entity".to_vec()).unwrap()]
+            ).unwrap();
         for i in 2..=12 {
-            assert_ok!(Uniques::mint(
+            let _ = Pallet::<Test>::register_asset(
                 RuntimeOrigin::signed(who),
                 collec_id,
-                i, // 2 3 4 5 -> 4 assets.
-                who
-            ));
-            assert_ok!(Pallet::<Test>::set_ownership(
+                i,
+                tags.clone()
+            );
+            let _ = Pallet::<Test>::set_ownership(
                 RuntimeOrigin::signed(who),
                 collec_id,
                 owner_id,
                 i,
-            ));
+            );
         }
+
 
         // Retrieve the first 4 assets.
         assert_ok!(Pallet::<Test>::get_owned_assets(
@@ -67,34 +74,8 @@ fn supports_maximum_exceeded() {
         let owner_id = 1u128;
         let who = 1u64;
 
-        // Create collection and NFTs with pallet_uniques.
-        assert_ok!(Uniques::create(
-            RuntimeOrigin::signed(who),
-            collec_id,
-            who
-        ));
-        assert_ok!(Uniques::mint(
-            RuntimeOrigin::signed(who),
-            collec_id,
-            owner_id, // 1 -> 1 asset.
-            who
-        ));
 
-        for i in 2..=12 {
-            assert_ok!(Uniques::mint(
-                RuntimeOrigin::signed(who),
-                collec_id,
-                i, // 2 3 4 5 6 7 8 9 10 11 12 -> 11 assets.
-                who
-            ));
-            assert_ok!(Pallet::<Test>::set_ownership(
-                RuntimeOrigin::signed(who),
-                collec_id,
-                owner_id,
-                i,
-            ));
-        }
-
+        
         // Test for exceeded limit.
         assert_noop!(
             Pallet::<Test>::get_owned_assets(

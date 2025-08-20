@@ -202,7 +202,7 @@ pub mod pallet {
             let count = AssetCount::<T>::get((collec_id, owner_id));
             let mut found_asset = false;
             for index in 0..count {
-                if OwnerAssets::<T>::get((collec_id, owner_id, index)).is_some() {
+                if OwnerAssets::<T>::get((collec_id, owner_id, index)) == Some(asset_id) {
                     found_asset = true;
                     break;
                 }

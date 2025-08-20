@@ -62,3 +62,48 @@ fn works() {
         );
     });
 }
+
+#[test]
+fn asset_count_for_3_items() {
+    new_test_ext().execute_with(|| {
+        let collec_id = 1u32;
+        let owner_id = 1u128;
+        let who = 1u64;
+
+        // Create NFT for the owner.
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+            BoundedVec::try_from(vec![
+                BoundedVec::try_from(b"entity".to_vec()).unwrap(),
+                BoundedVec::try_from(b"owner".to_vec()).unwrap(),
+                BoundedVec::try_from(b"character".to_vec()).unwrap(),
+        ]).unwrap();
+        let _ = Pallet::<Test>::register_asset(
+            RuntimeOrigin::signed(who),
+            collec_id,
+            owner_id,
+            tags
+        );
+
+        // Create 3 NFTs for the assets with ids 2, 3, 4.
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+            BoundedVec::try_from(
+                vec![BoundedVec::try_from(b"entity".to_vec()).unwrap()]
+            ).unwrap();
+        for i in 2..=4 {
+            let _ = Pallet::<Test>::register_asset(
+                RuntimeOrigin::signed(who),
+                collec_id,
+                i,
+                tags.clone()
+            );
+            let _ = Pallet::<Test>::set_ownership(
+                RuntimeOrigin::signed(who),
+                collec_id,
+                owner_id,
+                i,
+            );
+        }
+
+        assert_eq!(AssetCount::<Test>::get((collec_id, owner_id)), 3);
+    });
+}
