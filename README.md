@@ -25,23 +25,18 @@ The current MVP of Telurean Chain includes the following core functionalities:
 - Complex hierarchical relationships:
 
 ```plaintext
-  Entity
-    ┗━ Complex
-        ┣━ Creature
-        ┃   ┣━ Owner
-        ┃   ┃   ┣━ Character
-        ┃   ┗━ Carrier
-        ┃       ┗━ Beast
-        ┃           ┗━ Mount
-        ┃
-        ┣━ Container
-        ┃   ┗━ Vehicle
-        ┃
-        ┗━ Compound
-            ┗━ Place
-                ┣━ Map
-                ┗━ POI
-  Badge
-    ┣━ Honor
-    ┣━ Rank
-    ┗━ State
+  entity
+    ┣━ owner
+    ┃   ┣━ character
+    ┣━ agent
+    ┃
+    ┣━ container
+    ┃   ┃    ┗━ vehicle
+    ┃   ┣━━━━━━ place
+    ┃   ┃        ┗━ zone
+    ┗━ aggregate
+
+  badge
+    ┣━ honor
+    ┣━ rank
+    ┗━ state
