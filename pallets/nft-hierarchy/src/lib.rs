@@ -134,6 +134,7 @@ pub mod pallet {
         UnknownCollection,
         AlreadyExists,
         NotOwner,
+        AlreadyOwner,
         OwnershipNotFound,
         ExceededTypeLimit,
         ExceededMaxAssetsPerQuery,
@@ -197,12 +198,18 @@ pub mod pallet {
                 Error::<T>::WrongNft
             );
 
-            // Add new ownership relationship.
-            let index = AssetCount::<T>::get((collec_id, owner_id));
-            if index == 0 {
-                AssetCount::<T>::insert((collec_id, owner_id), 0);
+            // Verify that the owner does not own the asset yet.
+            let count = AssetCount::<T>::get((collec_id, owner_id));
+            let mut found_asset = false;
+            for index in 0..count {
+                if OwnerAssets::<T>::get((collec_id, owner_id, index)).is_some() {
+                    found_asset = true;
+                    break;
+                }
             }
-            OwnerAssets::<T>::insert((collec_id, owner_id, index), Some(asset_id));
+            ensure!(!found_asset, Error::<T>::AlreadyOwner);
+
+            OwnerAssets::<T>::insert((collec_id, owner_id, count), Some(asset_id));
             AssetCount::<T>::mutate((collec_id, owner_id), |count| *count += 1);
 
             Self::deposit_event(Event::OwnershipAdded {
