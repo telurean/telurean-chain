@@ -95,6 +95,15 @@ pub mod pallet {
         u128,
         ValueQuery>;
 
+    // Other possible relationships for future implementation:
+    //   · CharacterBadges
+    //   · CarrierItems
+    //   · ContainerContents
+    //   · AggregateParts
+    //   · PlaceAdjacents
+    //   · PaginatedGeneric
+    //   · BoundedGeneric
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
