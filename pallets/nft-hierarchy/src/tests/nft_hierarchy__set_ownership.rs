@@ -1,8 +1,7 @@
 #![allow(non_snake_case)]
 
 use super::super::*;
-use crate::mock::{new_test_ext, RuntimeOrigin, System, Test, Uniques};
-use pallet_uniques::{self as uniques};
+use crate::mock::{new_test_ext, RuntimeOrigin, System, Test};
 use frame_support::{assert_ok, BoundedVec};
 
 #[test]
@@ -13,15 +12,8 @@ fn works() {
         let asset_id = 2u128; // The asset is created second and should have the ID 2.
         let who = 1u64;
 
-        // Create a collection with pallet_uniques.
-        assert_ok!(Uniques::create(
-            RuntimeOrigin::signed(who),
-            collec_id,
-            who
-        ));
-
         // Create NFT for the owner.
-        let tags: BoundedVec<BoundedVec<u8, <Test as uniques::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
             BoundedVec::try_from(vec![
                 BoundedVec::try_from(b"entity".to_vec()).unwrap(),
                 BoundedVec::try_from(b"owner".to_vec()).unwrap(),
@@ -30,21 +22,21 @@ fn works() {
         assert_ok!(Pallet::<Test>::register_asset(
             RuntimeOrigin::signed(who),
             collec_id,
+            owner_id,
             tags
         ));
-        assert_eq!(LastNftId::<Test>::get(), owner_id);
 
         // Create NFT for the asset.
-        let tags: BoundedVec<BoundedVec<u8, <Test as uniques::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
+        let tags: BoundedVec<BoundedVec<u8, <Test as pallet::Config>::StringLimit>, <Test as pallet::Config>::TypeLimit> = 
             BoundedVec::try_from(
                 vec![BoundedVec::try_from(b"entity".to_vec()).unwrap()]
             ).unwrap();
         assert_ok!(Pallet::<Test>::register_asset(
             RuntimeOrigin::signed(who),
             collec_id,
+            asset_id,
             tags
         ));
-        assert_eq!(LastNftId::<Test>::get(), asset_id);
 
         // Verify relationship creation.
         assert_ok!(Pallet::<Test>::set_ownership(
@@ -55,7 +47,7 @@ fn works() {
         ));
         assert_eq!(AssetCount::<Test>::get((collec_id, owner_id)), 1);
         assert_eq!(
-            OwnerAssets::<Test>::get((collec_id, owner_id, 1)),
+            OwnerAssets::<Test>::get((collec_id, owner_id, 0)),
             Some(asset_id)
         );
 
