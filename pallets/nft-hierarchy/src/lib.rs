@@ -96,11 +96,11 @@ pub mod pallet {
         ValueQuery>;
 
     // Other possible relationships for future implementation:
-    //   · CharacterBadges
+    //   · CharacterBadges ━━━━━ Possibly for a future pallet Audit. 
     //   · CarrierItems
     //   · ContainerContents
     //   · AggregateParts
-    //   · PlaceAdjacents
+    //   · PlaceAdjacents ━━━━━━ Possibly for a future pallet Cartography.
     //   · PaginatedGeneric
     //   · BoundedGeneric
 
